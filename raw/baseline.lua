@@ -39,7 +39,244 @@ local HttpService = game:GetService("HttpService")
 local TweenService = game:GetService("TweenService")
 local Players = game:GetService("Players")
 
-local ScrollingBar = require(game.ReplicatedStorage:WaitForChild("ScrollingBar"))
+local ScrollingBar = (function()
+	local ScrollingBar = {}
+	ScrollingBar.__index = ScrollingBar
+
+	local UIS = game:GetService("UserInputService")
+	local SCROLLBAR_SIZE = 14
+	local ARROW_IMAGE = "rbxassetid://5279719038"
+	local ARROW_COLOR = Color3.fromRGB(160, 160, 160)
+	local TRACK_COLOR = Color3.fromRGB(30, 30, 30)
+	local TRACK_BORDER = Color3.fromRGB(45, 45, 45)
+	local BTN_HOVER_COLOR = Color3.fromRGB(50, 50, 50)
+	local BTN_PRESS_COLOR = Color3.fromRGB(70, 70, 76)
+	local THUMB_COLOR = Color3.fromRGB(60, 60, 60)
+	local THUMB_HOVER_COLOR = Color3.fromRGB(80, 80, 80)
+	local THUMB_MIN_SIZE = 20
+	local SCROLL_STEP = 45
+
+	local function makeArrowButton(parent, rotation, isVertical)
+		local btn = Instance.new("ImageButton")
+		btn.Size = isVertical and UDim2.new(1, 0, 0, SCROLLBAR_SIZE) or UDim2.new(0, SCROLLBAR_SIZE, 1, 0)
+		btn.BackgroundColor3 = TRACK_COLOR
+		btn.BorderColor3 = TRACK_BORDER
+		btn.BorderSizePixel = 1
+		btn.AutoButtonColor = false
+		btn.Image = ""
+		btn.ZIndex = 101
+		btn.Parent = parent
+		btn.BackgroundTransparency = 1
+		
+		local icon = Instance.new("ImageLabel")
+		icon.AnchorPoint = Vector2.new(0.5, 0.5)
+		icon.Size = UDim2.new(0, 8, 0, 5)
+		icon.Position = UDim2.new(0.5, 0, 0.5, 0)
+		icon.BackgroundTransparency = 1
+		icon.Image = ARROW_IMAGE
+		icon.ImageColor3 = ARROW_COLOR
+		icon.Rotation = rotation
+		icon.ZIndex = 102
+		icon.Parent = btn
+
+		btn.MouseEnter:Connect(function() btn.BackgroundColor3 = BTN_HOVER_COLOR end)
+		btn.MouseLeave:Connect(function() btn.BackgroundColor3 = TRACK_COLOR end)
+		btn.MouseButton1Down:Connect(function() btn.BackgroundColor3 = BTN_PRESS_COLOR end)
+		btn.MouseButton1Up:Connect(function() btn.BackgroundColor3 = BTN_HOVER_COLOR end)
+
+		return btn
+	end
+
+	function ScrollingBar.new(container, isVertical)
+		local self = setmetatable({}, ScrollingBar)
+		self.Container = container
+		self.IsVertical = isVertical
+		self.ViewSize = 0
+		self.ContentSize = 0
+		self.ScrollPos = 0
+		self.Connections = {}
+		self.OnScroll = nil
+
+		self.BarFrame = Instance.new("Frame")
+		self.BarFrame.Name = isVertical and "VScrollBar" or "HScrollBar"
+		self.BarFrame.BackgroundColor3 = TRACK_COLOR
+		self.BarFrame.BorderColor3 = TRACK_BORDER
+		self.BarFrame.BorderSizePixel = 1
+		self.BarFrame.Size = isVertical and UDim2.new(0, SCROLLBAR_SIZE, 1, 0) or UDim2.new(1, -SCROLLBAR_SIZE, 0, SCROLLBAR_SIZE)
+		self.BarFrame.Position = isVertical and UDim2.new(1, -SCROLLBAR_SIZE, 0, 0) or UDim2.new(0, 0, 1, -SCROLLBAR_SIZE)
+		self.BarFrame.ZIndex = 100
+		self.BarFrame.Parent = container
+		self.BarFrame.Visible = false
+		self.BarFrame.BackgroundTransparency = 1
+
+		local upBtn = makeArrowButton(self.BarFrame, isVertical and 180 or -90, isVertical)
+		upBtn.AnchorPoint = Vector2.new(0, 0)
+		upBtn.Position = UDim2.new(0, 0, 0, 0)
+
+		local downBtn = makeArrowButton(self.BarFrame, isVertical and 0 or 90, isVertical)
+		downBtn.AnchorPoint = Vector2.new(isVertical and 0 or 1, isVertical and 1 or 0)
+		downBtn.Position = isVertical and UDim2.new(0, 0, 1, 0) or UDim2.new(1, 0, 0, 0)
+
+		self.Track = Instance.new("Frame")
+		self.Track.Name = "Track"
+		self.Track.BackgroundTransparency = 1
+		self.Track.BorderSizePixel = 0
+		self.Track.Size = isVertical and UDim2.new(1, 0, 1, -SCROLLBAR_SIZE * 2) or UDim2.new(1, -SCROLLBAR_SIZE * 2, 1, 0)
+		self.Track.Position = isVertical and UDim2.new(0, 0, 0, SCROLLBAR_SIZE) or UDim2.new(0, SCROLLBAR_SIZE, 0, 0)
+		self.Track.ZIndex = 100
+		self.Track.Parent = self.BarFrame
+
+		self.Thumb = Instance.new("Frame")
+		self.Thumb.Name = "Thumb"
+		self.Thumb.BackgroundColor3 = THUMB_COLOR
+		self.Thumb.BorderSizePixel = 0
+		self.Thumb.Size = isVertical and UDim2.new(1, -2, 0, 30) or UDim2.new(0, 30, 1, -2)
+		self.Thumb.Position = isVertical and UDim2.new(0, 1, 0, 0) or UDim2.new(0, 0, 0, 1)
+		self.Thumb.ZIndex = 101
+		self.Thumb.Visible = false
+		self.Thumb.Parent = self.Track
+		self.Thumb.BackgroundTransparency = 0.55
+
+		local thumbBtn = Instance.new("TextButton")
+		thumbBtn.Size = UDim2.new(1, 0, 1, 0)
+		thumbBtn.BackgroundTransparency = 1
+		thumbBtn.Text = ""
+		thumbBtn.ZIndex = 102
+		thumbBtn.Parent = self.Thumb
+
+		local dragging = false
+		local dragStartMouse = 0
+		local dragStartThumbOffset = 0
+
+		thumbBtn.MouseEnter:Connect(function()
+			self.Thumb.BackgroundColor3 = THUMB_HOVER_COLOR
+		end)
+
+		thumbBtn.MouseLeave:Connect(function()
+			if not dragging then
+				self.Thumb.BackgroundColor3 = THUMB_COLOR
+			end
+		end)
+
+		thumbBtn.MouseButton1Down:Connect(function()
+			dragging = true
+			self.Thumb.BackgroundColor3 = THUMB_HOVER_COLOR
+			local mousePos = isVertical and UIS:GetMouseLocation().Y or UIS:GetMouseLocation().X
+			dragStartMouse = mousePos
+			dragStartThumbOffset = isVertical and self.Thumb.Position.Y.Offset or self.Thumb.Position.X.Offset
+		end)
+
+		table.insert(self.Connections, UIS.InputChanged:Connect(function(input)
+			if dragging then
+				if input.UserInputType == Enum.UserInputType.MouseMovement then
+					local mousePos = isVertical and UIS:GetMouseLocation().Y or UIS:GetMouseLocation().X
+					local delta = mousePos - dragStartMouse
+					local trackAbsSize = isVertical and self.Track.AbsoluteSize.Y or self.Track.AbsoluteSize.X
+					local thumbAbsSize = isVertical and self.Thumb.AbsoluteSize.Y or self.Thumb.AbsoluteSize.X
+					local maxOffset = math.max(0, trackAbsSize - thumbAbsSize)
+					local newOffset = math.clamp(dragStartThumbOffset + delta, 0, maxOffset)
+					local ratio = maxOffset > 0 and (newOffset / maxOffset) or 0
+					local maxScroll = math.max(0, self.ContentSize - self.ViewSize)
+					if self.OnScroll then
+						self.OnScroll(ratio * maxScroll)
+					end
+				end
+			elseif input.UserInputType == Enum.UserInputType.MouseWheel then
+				if self.IsVertical and self.BarFrame.Visible then
+					local pos = input.Position
+					local absPos = self.Container.AbsolutePosition
+					local absSize = self.Container.AbsoluteSize
+					if pos.X >= absPos.X and pos.X <= absPos.X + absSize.X and pos.Y >= absPos.Y and pos.Y <= absPos.Y + absSize.Y then
+						local dir = -math.sign(input.Position.Z)
+						local maxScroll = math.max(0, self.ContentSize - self.ViewSize)
+						local newScroll = math.clamp(self.ScrollPos + dir * SCROLL_STEP, 0, maxScroll)
+						if self.OnScroll then
+							self.OnScroll(newScroll)
+						end
+					end
+				end
+			end
+		end))
+
+		table.insert(self.Connections, UIS.InputEnded:Connect(function(input)
+			if input.UserInputType == Enum.UserInputType.MouseButton1 then
+				if dragging then
+					dragging = false
+					self.Thumb.BackgroundColor3 = THUMB_COLOR
+				end
+			end
+		end))
+
+		local function scrollStepDir(dir)
+			local max = math.max(0, self.ContentSize - self.ViewSize)
+			local nP = math.clamp(self.ScrollPos + dir * SCROLL_STEP, 0, max)
+			if self.OnScroll then self.OnScroll(nP) end
+		end
+
+		local function startRepeat(dir)
+			local active = true
+			scrollStepDir(dir)
+			task.spawn(function()
+				task.wait(0.35)
+				while active do
+					scrollStepDir(dir)
+					task.wait(0.05)
+				end
+			end)
+			return function() active = false end
+		end
+
+		local stopUp, stopDown
+
+		upBtn.MouseButton1Down:Connect(function() stopUp = startRepeat(-1) end)
+		upBtn.MouseButton1Up:Connect(function() if stopUp then stopUp() stopUp = nil end end)
+		upBtn.MouseLeave:Connect(function() if stopUp then stopUp() stopUp = nil end end)
+
+		downBtn.MouseButton1Down:Connect(function() stopDown = startRepeat(1) end)
+		downBtn.MouseButton1Up:Connect(function() if stopDown then stopDown() stopDown = nil end end)
+		downBtn.MouseLeave:Connect(function() if stopDown then stopDown() stopDown = nil end end)
+
+		return self
+	end
+
+	function ScrollingBar:UpdateMetrics(viewSize, contentSize, scrollPos)
+		self.ViewSize = viewSize
+		self.ContentSize = contentSize
+		self.ScrollPos = scrollPos
+
+		local trackSize = self.IsVertical and self.Track.AbsoluteSize.Y or self.Track.AbsoluteSize.X
+
+		if contentSize <= viewSize or trackSize <= 0 then
+			self.BarFrame.Visible = false
+			self.Thumb.Visible = false
+			return
+		end
+
+		self.BarFrame.Visible = true
+		self.Thumb.Visible = true
+
+		local maxScroll = contentSize - viewSize
+		local ratio = math.clamp(viewSize / contentSize, 0, 1)
+		local thumbSize = math.max(THUMB_MIN_SIZE, ratio * trackSize)
+		local scrollRatio = maxScroll > 0 and scrollPos / maxScroll or 0
+		local thumbOffset = scrollRatio * (trackSize - thumbSize)
+
+		if self.IsVertical then
+			self.Thumb.Size = UDim2.new(1, -2, 0, thumbSize)
+			self.Thumb.Position = UDim2.new(0, 1, 0, thumbOffset)
+		else
+			self.Thumb.Size = UDim2.new(0, thumbSize, 1, -2)
+			self.Thumb.Position = UDim2.new(0, thumbOffset, 0, 1)
+		end
+	end
+
+	function ScrollingBar:Destroy()
+		for _, conn in ipairs(self.Connections) do conn:Disconnect() end
+		self.BarFrame:Destroy()
+	end
+
+	return ScrollingBar
+end)())
 
 local localPlayer = Players.LocalPlayer
 
