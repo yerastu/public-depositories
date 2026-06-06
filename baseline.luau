@@ -616,40 +616,24 @@ function Baseline.new(canvasGroup)
             end
         end)
     end))
-    
     table.insert(self.Connections, UserInputService.InputBegan:Connect(function(input, gameProcessed)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             local pos = input.Position
-            if not localPlayer then return end
             
-            local playerGui = localPlayer:WaitForChild("PlayerGui")
-            local guiObjects = playerGui:GetGuiObjectsAtPosition(pos.X, pos.Y)
-            local didClickSelf = false
-            
-            for _, guiObject in ipairs(guiObjects) do
-                if self.VScrollBar and (guiObject == self.VScrollBar.BarFrame or guiObject:IsDescendantOf(self.VScrollBar.BarFrame)) then
-                    return
-                end
-                if self.HScrollBar and (guiObject == self.HScrollBar.BarFrame or guiObject:IsDescendantOf(self.HScrollBar.BarFrame)) then
-                    return
-                end
-                if guiObject == self.CanvasGroup or guiObject:IsDescendantOf(self.CanvasGroup) then
-                    didClickSelf = true
-                    break
-                end
+            local function isInside(gui)
+                if not gui or not gui.Visible then return false end
+                local absPos = gui.AbsolutePosition
+                local absSize = gui.AbsoluteSize
+                return pos.X >= absPos.X and pos.X <= absPos.X + absSize.X and pos.Y >= absPos.Y and pos.Y <= absPos.Y + absSize.Y
             end
             
+            if self.VScrollBar and isInside(self.VScrollBar.BarFrame) then return end
+            if self.HScrollBar and isInside(self.HScrollBar.BarFrame) then return end
+            if self.FindUI and isInside(self.FindUI) then return end
+            
+            local didClickSelf = isInside(self.CanvasGroup)
+            
             if didClickSelf then
-                if self.FindUI then
-                    local inputPos = input.Position
-                    local overlappingGuis = playerGui:GetGuiObjectsAtPosition(inputPos.X, inputPos.Y)
-                    for _, guiObject in ipairs(overlappingGuis) do
-                        if guiObject:IsDescendantOf(self.FindUI) then
-                            return
-                        end
-                    end
-                end
-                
                 self:Focus()
                 
                 local relativeX = (pos.X - self.InnerFrame.AbsolutePosition.X) - 4
