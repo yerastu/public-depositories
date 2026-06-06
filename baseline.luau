@@ -276,7 +276,7 @@ local ScrollingBar = (function()
 	end
 
 	return ScrollingBar
-end)())
+end)()
 
 local localPlayer = Players.LocalPlayer
 
