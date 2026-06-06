@@ -1,3 +1,5 @@
+--no credits needed 
+
 local AutoIndent = {}
 
 function AutoIndent.needsEnd(line)
@@ -327,7 +329,10 @@ local function getCharacter(keyCode, isShiftDown)
 end
 
 local function escapeRichText(rawString)
-    return rawString:gsub("&", "&amp;"):gsub("<", "&lt;"):gsub(">", "&gt;")
+    local s = string.gsub(rawString, "&", "&amp;")
+    s = string.gsub(s, "<", "&lt;")
+    s = string.gsub(s, ">", "&gt;")
+    return s
 end
 
 local function getNextWordBoundary(text, index)
