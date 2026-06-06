@@ -1,5 +1,3 @@
---no credits needed 
-
 local AutoIndent = {}
 
 function AutoIndent.needsEnd(line)
@@ -31,7 +29,7 @@ local ScrollingBar = (function()
     ScrollingBar.__index = ScrollingBar
 
     local UIS = game:GetService("UserInputService")
-    local SCROLLBAR_SIZE = 14
+    local SCROLLBAR_SIZE = 18
     local ARROW_IMAGE = "rbxassetid://5279719038"
     local ARROW_COLOR = Color3.fromRGB(160, 160, 160)
     local TRACK_COLOR = Color3.fromRGB(30, 30, 30)
@@ -40,7 +38,7 @@ local ScrollingBar = (function()
     local BTN_PRESS_COLOR = Color3.fromRGB(70, 70, 76)
     local THUMB_COLOR = Color3.fromRGB(60, 60, 60)
     local THUMB_HOVER_COLOR = Color3.fromRGB(80, 80, 80)
-    local THUMB_MIN_SIZE = 20
+    local THUMB_MIN_SIZE = 24
     local SCROLL_STEP = 45
 
     local function makeArrowButton(parent, rotation, isVertical)
@@ -53,11 +51,11 @@ local ScrollingBar = (function()
         btn.Image = ""
         btn.ZIndex = 101
         btn.Parent = parent
-        btn.BackgroundTransparency = 1
+        btn.BackgroundTransparency = 0
         
         local icon = Instance.new("ImageLabel")
         icon.AnchorPoint = Vector2.new(0.5, 0.5)
-        icon.Size = UDim2.new(0, 8, 0, 5)
+        icon.Size = UDim2.new(0, 10, 0, 6)
         icon.Position = UDim2.new(0.5, 0, 0.5, 0)
         icon.BackgroundTransparency = 1
         icon.Image = ARROW_IMAGE
@@ -94,7 +92,7 @@ local ScrollingBar = (function()
         self.BarFrame.ZIndex = 100
         self.BarFrame.Parent = container
         self.BarFrame.Visible = false
-        self.BarFrame.BackgroundTransparency = 1
+        self.BarFrame.BackgroundTransparency = 0
 
         local upBtn = makeArrowButton(self.BarFrame, isVertical and 180 or -90, isVertical)
         upBtn.AnchorPoint = Vector2.new(0, 0)
@@ -106,7 +104,8 @@ local ScrollingBar = (function()
 
         self.Track = Instance.new("Frame")
         self.Track.Name = "Track"
-        self.Track.BackgroundTransparency = 1
+        self.Track.BackgroundColor3 = TRACK_COLOR
+        self.Track.BackgroundTransparency = 0
         self.Track.BorderSizePixel = 0
         self.Track.Size = isVertical and UDim2.new(1, 0, 1, -SCROLLBAR_SIZE * 2) or UDim2.new(1, -SCROLLBAR_SIZE * 2, 1, 0)
         self.Track.Position = isVertical and UDim2.new(0, 0, 0, SCROLLBAR_SIZE) or UDim2.new(0, SCROLLBAR_SIZE, 0, 0)
@@ -122,7 +121,7 @@ local ScrollingBar = (function()
         self.Thumb.ZIndex = 101
         self.Thumb.Visible = false
         self.Thumb.Parent = self.Track
-        self.Thumb.BackgroundTransparency = 0.55
+        self.Thumb.BackgroundTransparency = 0
 
         local thumbBtn = Instance.new("TextButton")
         thumbBtn.Size = UDim2.new(1, 0, 1, 0)
@@ -404,6 +403,7 @@ function Baseline.new(canvasGroup)
     self.SelectionStart = 0
     self.ScrollOffset = Vector2.new(0, 0)
     self.DocumentHeight = 0
+    self.CachedDocumentWidth = 0
     self.HeldKey = nil
     self.KeyTimer = 0
     self.KeyTick = 0
@@ -529,20 +529,7 @@ function Baseline.new(canvasGroup)
             if text == "\n" or text == "\r\n" or text == "\r" then return end
             local isManualKeystroke = (#text == 1) and (text == self.LastTypedChar) and ((tick() - self.LastTypedTick) < 0.2)
             if not isManualKeystroke then
-                if #text > 100 then
-                    self:PasteChunked(text)
-                else
-                    if self.SelectionStart ~= self.CursorIndex then
-                        self:DeleteSelection()
-                    end
-                    local currentText = self.CanvasGroup:GetAttribute("Text") or ""
-                    local beforeCursor = currentText:sub(1, self.CursorIndex)
-                    local afterCursor = currentText:sub(self.CursorIndex + 1)
-                    self.CursorIndex = self.CursorIndex + #text
-                    self.SelectionStart = self.CursorIndex
-                    self.CanvasGroup:SetAttribute("Text", beforeCursor .. text .. afterCursor)
-                    self:PushHistory()
-                end
+                self:PasteChunked(text)
             end
         end
     end))
@@ -1568,21 +1555,17 @@ function Baseline:PasteChunked(text)
         local endOffset = utf8.offset(text, remainingSpace + 1)
         if endOffset then text = text:sub(1, endOffset - 1) end
     end
+    
     task.spawn(function()
         if self.SelectionStart ~= self.CursorIndex then self:DeleteSelection() end
-        local chunkSize = 5000
-        local iterator = 1
-        while iterator <= #text do
-            local textChunk = text:sub(iterator, (iterator + chunkSize) - 1)
-            local currentText = self.CanvasGroup:GetAttribute("Text") or ""
-            local stringBefore = currentText:sub(1, self.CursorIndex)
-            local stringAfter = currentText:sub(self.CursorIndex + 1)
-            self.CursorIndex = self.CursorIndex + #textChunk
-            self.SelectionStart = self.CursorIndex
-            self.CanvasGroup:SetAttribute("Text", stringBefore .. textChunk .. stringAfter)
-            iterator = iterator + chunkSize
-            if iterator <= #text then task.wait() end
-        end
+        local currentText = self.CanvasGroup:GetAttribute("Text") or ""
+        local stringBefore = currentText:sub(1, self.CursorIndex)
+        local stringAfter = currentText:sub(self.CursorIndex + 1)
+        
+        self.CursorIndex = self.CursorIndex + #text
+        self.SelectionStart = self.CursorIndex
+        self.CanvasGroup:SetAttribute("Text", stringBefore .. text .. stringAfter)
+        
         self:PushHistory()
         self.IsPasting = false
         self:UpdateBlinker(true)
@@ -1888,6 +1871,7 @@ function Baseline:GetLineMap(text, textSize, font, limitVector)
     local lineSegments = {}
     local defaultTextHeight = TextService:GetTextSize("A", textSize, font, Vector2.new(10000, 10000)).Y
     if text == "" then
+        self.CachedDocumentWidth = 8
         return {{startIdx = 1, endIdx = 0, y = 0, height = defaultTextHeight, lineNumber = 1}}
     end
     local currentYPosition = 0
@@ -1895,6 +1879,10 @@ function Baseline:GetLineMap(text, textSize, font, limitVector)
     local isWrapped = limitVector.X < 10000
     local textLength = #text
     local logicalLineNumber = 1
+    local maxLen = 0
+    local maxLenStart = 1
+    local maxLenEnd = 0
+
     while iteratorIndex <= textLength do
         local nextNewlineMatch = text:find("\n", iteratorIndex)
         local segmentEndIndex = nextNewlineMatch and (nextNewlineMatch - 1) or textLength
@@ -1906,6 +1894,12 @@ function Baseline:GetLineMap(text, textSize, font, limitVector)
                 height = defaultTextHeight, 
                 lineNumber = logicalLineNumber
             })
+            local segLen = segmentEndIndex - iteratorIndex
+            if segLen > maxLen then
+                maxLen = segLen
+                maxLenStart = iteratorIndex
+                maxLenEnd = segmentEndIndex
+            end
             currentYPosition = currentYPosition + defaultTextHeight
             iteratorIndex = nextNewlineMatch and (nextNewlineMatch + 1) or (textLength + 1)
             logicalLineNumber = logicalLineNumber + 1
@@ -1965,6 +1959,18 @@ function Baseline:GetLineMap(text, textSize, font, limitVector)
             lineNumber = logicalLineNumber
         })
     end
+
+    if not isWrapped then
+        if maxLenEnd >= maxLenStart then
+            local widestString = text:sub(maxLenStart, maxLenEnd)
+            self.CachedDocumentWidth = TextService:GetTextSize(widestString, textSize, font, Vector2.new(10000, 10000)).X + 8
+        else
+            self.CachedDocumentWidth = 8
+        end
+    else
+        self.CachedDocumentWidth = limitVector.X
+    end
+
     return lineSegments
 end
 
@@ -2041,6 +2047,7 @@ function Baseline:UpdateBlinker(autoScrollEnabled)
     local editorDefaultHeight = editorLineMap[1] and editorLineMap[1].height or 14
     
     self.DocumentHeight = editorLineMap[#editorLineMap] and (editorLineMap[#editorLineMap].y + editorLineMap[#editorLineMap].height) or editorDefaultHeight
+    self.DocumentHeight = self.DocumentHeight + 22
     
     local currentCursorX, currentCursorY = 0, 0
     local currentCursorHeight = editorDefaultHeight
@@ -2059,24 +2066,7 @@ function Baseline:UpdateBlinker(autoScrollEnabled)
     local viewportWidth = (self.CanvasGroup.AbsoluteSize.X - 8) - lineNumbersMarginWidth
     local viewportHeight = self.CanvasGroup.AbsoluteSize.Y - 8
     local scrollOffsetX, scrollOffsetY = self.ScrollOffset.X, self.ScrollOffset.Y
-    local documentTotalWidth = 0
-    
-    if not self.CanvasGroup:GetAttribute("Wrapped") then
-        local maxLen = 0
-        local widestString = ""
-        for _, lineData in ipairs(editorLineMap) do
-            local length = lineData.endIdx - lineData.startIdx
-            if length > maxLen then
-                maxLen = length
-                if lineData.startIdx <= lineData.endIdx then
-                    widestString = displayedText:sub(lineData.startIdx, lineData.endIdx)
-                end
-            end
-        end
-        if widestString ~= "" then
-            documentTotalWidth = TextService:GetTextSize(widestString, editorTextSize, editorFont, Vector2.new(10000, 10000)).X + 8
-        end
-    end
+    local documentTotalWidth = self.CachedDocumentWidth or 0
     
     if autoScrollEnabled then
         if currentCursorX < scrollOffsetX then scrollOffsetX = currentCursorX end
@@ -2130,110 +2120,149 @@ function Baseline:UpdateBlinker(autoScrollEnabled)
     local visibleLinesCount = 0
     local visibleHighlightsCount = 0
     local visibleLineNumbersCount = 0
+    
+    local firstVisibleIdx, lastVisibleIdx = 1, #editorLineMap
+    if #editorLineMap > 0 then
+        local L, R = 1, #editorLineMap
+        local bestFirst = 1
+        while L <= R do
+            local M = math.floor((L + R) / 2)
+            if (editorLineMap[M].y + editorLineMap[M].height) >= viewportStartY then
+                bestFirst = M
+                R = M - 1
+            else
+                L = M + 1
+            end
+        end
+        firstVisibleIdx = bestFirst
+
+        local bestLast = bestFirst
+        L, R = bestFirst, #editorLineMap
+        while L <= R do
+            local M = math.floor((L + R) / 2)
+            if editorLineMap[M].y <= viewportEndY then
+                bestLast = M
+                L = M + 1
+            else
+                R = M - 1
+            end
+        end
+        lastVisibleIdx = bestLast
+    end
+    
     local syntaxState = nil
     local processedTextUpTo = 1
     
-    for _, lineData in ipairs(editorLineMap) do
-        if (lineData.y + lineData.height) >= viewportStartY and lineData.y <= viewportEndY then
-            syntaxState = self:GetSyntaxStateAt(displayedText, lineData.startIdx, processedTextUpTo, syntaxState)
-            processedTextUpTo = lineData.startIdx
-            visibleLinesCount = visibleLinesCount + 1
-            local textLabelObj = self.LinesPool[visibleLinesCount]
-            if not textLabelObj then
-                textLabelObj = Instance.new("TextLabel")
-                textLabelObj.BackgroundTransparency = 1
-                textLabelObj.RichText = true
-                textLabelObj.TextXAlignment = Enum.TextXAlignment.Left
-                textLabelObj.TextYAlignment = Enum.TextYAlignment.Top
-                textLabelObj.ZIndex = 3
-                textLabelObj.Parent = self.InnerFrame
-                self.LinesPool[visibleLinesCount] = textLabelObj
-            end
-            local stringOnLine = (lineData.startIdx <= lineData.endIdx) and displayedText:sub(lineData.startIdx, lineData.endIdx) or ""
-            textLabelObj.Font = editorFont
-            textLabelObj.TextSize = editorTextSize
-            textLabelObj.TextColor3 = editorTextColor
-            textLabelObj.Text = self:ApplySyntax(stringOnLine, syntaxState)
-            textLabelObj.Position = UDim2.new(0, 4, 0, 4 + lineData.y)
-            textLabelObj.Size = UDim2.new(0, 10000, 0, lineData.height)
-            textLabelObj.Visible = true
-            
-            if hasLineNumbers and lineData.lineNumber then
-                visibleLineNumbersCount = visibleLineNumbersCount + 1
-                local numberLabelObj = self.LineNumbersPool[visibleLineNumbersCount]
-                if not numberLabelObj then
-                    numberLabelObj = Instance.new("TextLabel")
-                    numberLabelObj.BackgroundTransparency = 1
-                    numberLabelObj.TextXAlignment = Enum.TextXAlignment.Right
-                    numberLabelObj.TextYAlignment = Enum.TextYAlignment.Top
-                    numberLabelObj.ZIndex = 3
-                    numberLabelObj.Parent = self.LineNumbersInner
-                    self.LineNumbersPool[visibleLineNumbersCount] = numberLabelObj
+    if #editorLineMap > 0 and firstVisibleIdx > 1 then
+        local targetStart = editorLineMap[firstVisibleIdx].startIdx
+        syntaxState = self:GetSyntaxStateAt(displayedText, targetStart, 1, nil)
+        processedTextUpTo = targetStart
+    end
+    
+    if #editorLineMap > 0 then
+        for i = firstVisibleIdx, lastVisibleIdx do
+            local lineData = editorLineMap[i]
+            if lineData then
+                syntaxState = self:GetSyntaxStateAt(displayedText, lineData.startIdx, processedTextUpTo, syntaxState)
+                processedTextUpTo = lineData.startIdx
+                visibleLinesCount = visibleLinesCount + 1
+                local textLabelObj = self.LinesPool[visibleLinesCount]
+                if not textLabelObj then
+                    textLabelObj = Instance.new("TextLabel")
+                    textLabelObj.BackgroundTransparency = 1
+                    textLabelObj.RichText = true
+                    textLabelObj.TextXAlignment = Enum.TextXAlignment.Left
+                    textLabelObj.TextYAlignment = Enum.TextYAlignment.Top
+                    textLabelObj.ZIndex = 3
+                    textLabelObj.Parent = self.InnerFrame
+                    self.LinesPool[visibleLinesCount] = textLabelObj
                 end
-                numberLabelObj.Font = editorFont
-                numberLabelObj.TextSize = editorTextSize
-                numberLabelObj.TextColor3 = editorTextColor
-                numberLabelObj.TextTransparency = 0.5
-                numberLabelObj.Text = tostring(lineData.lineNumber)
-                numberLabelObj.Position = UDim2.new(0, 0, 0, 4 + lineData.y)
-                numberLabelObj.Size = UDim2.new(1, -8, 0, lineData.height)
-                numberLabelObj.Visible = true
-            end
-            
-            local function renderHighlightSelection(startIndex, endIndex, renderColor, renderTransparency)
-                if endIndex >= (lineData.startIdx - 1) and startIndex <= lineData.endIdx then
-                    local highlightStart = math.max(lineData.startIdx, startIndex + 1)
-                    local highlightEnd = math.min(lineData.endIdx, endIndex)
-                    local highlightOffsetX = 0
-                    local highlightWidth = 0
-                    if highlightStart <= highlightEnd then
-                        local stringBeforeHighlight = displayedText:sub(lineData.startIdx, highlightStart - 1)
-                        highlightOffsetX = TextService:GetTextSize(stringBeforeHighlight, editorTextSize, editorFont, Vector2.new(10000, 10000)).X
-                        local stringUpToTarget = displayedText:sub(lineData.startIdx, highlightEnd)
-                        highlightWidth = TextService:GetTextSize(stringUpToTarget, editorTextSize, editorFont, Vector2.new(10000, 10000)).X - highlightOffsetX
-                    else
-                        local stringBeforeHighlight = (lineData.startIdx <= lineData.endIdx) and displayedText:sub(lineData.startIdx, lineData.endIdx) or ""
-                        highlightOffsetX = TextService:GetTextSize(stringBeforeHighlight, editorTextSize, editorFont, Vector2.new(10000, 10000)).X
+                local stringOnLine = (lineData.startIdx <= lineData.endIdx) and displayedText:sub(lineData.startIdx, lineData.endIdx) or ""
+                textLabelObj.Font = editorFont
+                textLabelObj.TextSize = editorTextSize
+                textLabelObj.TextColor3 = editorTextColor
+                textLabelObj.Text = self:ApplySyntax(stringOnLine, syntaxState)
+                textLabelObj.Position = UDim2.new(0, 4, 0, 4 + lineData.y)
+                textLabelObj.Size = UDim2.new(0, 10000, 0, lineData.height)
+                textLabelObj.Visible = true
+                
+                if hasLineNumbers and lineData.lineNumber then
+                    visibleLineNumbersCount = visibleLineNumbersCount + 1
+                    local numberLabelObj = self.LineNumbersPool[visibleLineNumbersCount]
+                    if not numberLabelObj then
+                        numberLabelObj = Instance.new("TextLabel")
+                        numberLabelObj.BackgroundTransparency = 1
+                        numberLabelObj.TextXAlignment = Enum.TextXAlignment.Right
+                        numberLabelObj.TextYAlignment = Enum.TextYAlignment.Top
+                        numberLabelObj.ZIndex = 3
+                        numberLabelObj.Parent = self.LineNumbersInner
+                        self.LineNumbersPool[visibleLineNumbersCount] = numberLabelObj
                     end
-                    if endIndex > lineData.endIdx and lineData.endIdx ~= #displayedText then
-                        if highlightStart > lineData.endIdx then
-                            highlightWidth = 5
+                    numberLabelObj.Font = editorFont
+                    numberLabelObj.TextSize = editorTextSize
+                    numberLabelObj.TextColor3 = editorTextColor
+                    numberLabelObj.TextTransparency = 0.5
+                    numberLabelObj.Text = tostring(lineData.lineNumber)
+                    numberLabelObj.Position = UDim2.new(0, 0, 0, 4 + lineData.y)
+                    numberLabelObj.Size = UDim2.new(1, -8, 0, lineData.height)
+                    numberLabelObj.Visible = true
+                end
+                
+                local function renderHighlightSelection(startIndex, endIndex, renderColor, renderTransparency)
+                    if endIndex >= (lineData.startIdx - 1) and startIndex <= lineData.endIdx then
+                        local highlightStart = math.max(lineData.startIdx, startIndex + 1)
+                        local highlightEnd = math.min(lineData.endIdx, endIndex)
+                        local highlightOffsetX = 0
+                        local highlightWidth = 0
+                        if highlightStart <= highlightEnd then
+                            local stringBeforeHighlight = displayedText:sub(lineData.startIdx, highlightStart - 1)
+                            highlightOffsetX = TextService:GetTextSize(stringBeforeHighlight, editorTextSize, editorFont, Vector2.new(10000, 10000)).X
+                            local stringUpToTarget = displayedText:sub(lineData.startIdx, highlightEnd)
+                            highlightWidth = TextService:GetTextSize(stringUpToTarget, editorTextSize, editorFont, Vector2.new(10000, 10000)).X - highlightOffsetX
                         else
-                            highlightWidth = highlightWidth + 5
+                            local stringBeforeHighlight = (lineData.startIdx <= lineData.endIdx) and displayedText:sub(lineData.startIdx, lineData.endIdx) or ""
+                            highlightOffsetX = TextService:GetTextSize(stringBeforeHighlight, editorTextSize, editorFont, Vector2.new(10000, 10000)).X
+                        end
+                        if endIndex > lineData.endIdx and lineData.endIdx ~= #displayedText then
+                            if highlightStart > lineData.endIdx then
+                                highlightWidth = 5
+                            else
+                                highlightWidth = highlightWidth + 5
+                            end
+                        end
+                        if highlightWidth > 0 then
+                            visibleHighlightsCount = visibleHighlightsCount + 1
+                            local highlightFrameObj = self.HighlightPool[visibleHighlightsCount]
+                            if not highlightFrameObj then
+                                highlightFrameObj = Instance.new("Frame")
+                                highlightFrameObj.BorderSizePixel = 0
+                                highlightFrameObj.ZIndex = 2
+                                highlightFrameObj.Parent = self.HighlightContainer
+                                self.HighlightPool[visibleHighlightsCount] = highlightFrameObj
+                            end
+                            highlightFrameObj.BackgroundColor3 = renderColor
+                            highlightFrameObj.BackgroundTransparency = renderTransparency
+                            highlightFrameObj.Position = UDim2.new(0, 4 + highlightOffsetX, 0, 4 + lineData.y)
+                            highlightFrameObj.Size = UDim2.new(0, highlightWidth, 0, lineData.height)
+                            highlightFrameObj.Visible = true
                         end
                     end
-                    if highlightWidth > 0 then
-                        visibleHighlightsCount = visibleHighlightsCount + 1
-                        local highlightFrameObj = self.HighlightPool[visibleHighlightsCount]
-                        if not highlightFrameObj then
-                            highlightFrameObj = Instance.new("Frame")
-                            highlightFrameObj.BorderSizePixel = 0
-                            highlightFrameObj.ZIndex = 2
-                            highlightFrameObj.Parent = self.HighlightContainer
-                            self.HighlightPool[visibleHighlightsCount] = highlightFrameObj
+                end
+                
+                if self.FindMatches then
+                    for _, matchData in ipairs(self.FindMatches) do
+                        if matchData.e >= (lineData.startIdx - 1) and matchData.s <= lineData.endIdx then
+                            renderHighlightSelection(matchData.s, matchData.e, Color3.fromRGB(255, 255, 0), 0.6)
                         end
-                        highlightFrameObj.BackgroundColor3 = renderColor
-                        highlightFrameObj.BackgroundTransparency = renderTransparency
-                        highlightFrameObj.Position = UDim2.new(0, 4 + highlightOffsetX, 0, 4 + lineData.y)
-                        highlightFrameObj.Size = UDim2.new(0, highlightWidth, 0, lineData.height)
-                        highlightFrameObj.Visible = true
                     end
                 end
-            end
-            
-            if self.FindMatches then
-                for _, matchData in ipairs(self.FindMatches) do
-                    if matchData.e >= (lineData.startIdx - 1) and matchData.s <= lineData.endIdx then
-                        renderHighlightSelection(matchData.s, matchData.e, Color3.fromRGB(255, 255, 0), 0.6)
+                
+                if self.SelectionStart ~= self.CursorIndex then
+                    local selectionStartIdx = math.min(self.SelectionStart, self.CursorIndex)
+                    local selectionEndIdx = math.max(self.SelectionStart, self.CursorIndex)
+                    if selectionEndIdx >= (lineData.startIdx - 1) and selectionStartIdx <= lineData.endIdx then
+                        renderHighlightSelection(selectionStartIdx, selectionEndIdx, editorHighlightColor, 0.7)
                     end
-                end
-            end
-            
-            if self.SelectionStart ~= self.CursorIndex then
-                local selectionStartIdx = math.min(self.SelectionStart, self.CursorIndex)
-                local selectionEndIdx = math.max(self.SelectionStart, self.CursorIndex)
-                if selectionEndIdx >= (lineData.startIdx - 1) and selectionStartIdx <= lineData.endIdx then
-                    renderHighlightSelection(selectionStartIdx, selectionEndIdx, editorHighlightColor, 0.7)
                 end
             end
         end
