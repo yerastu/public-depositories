@@ -1,5 +1,5 @@
-local AutoIndent = {}
 
+local AutoIndent = {}
 function AutoIndent.needsEnd(line)
     if line:match("if%s+.*then%s*$") then return true end
     if line:match("elseif%s+.*then%s*$") then return true end
@@ -9,13 +9,11 @@ function AutoIndent.needsEnd(line)
     if line:match("^%s*do%s*$") then return true end
     return false
 end
-
 local Baseline = {
     Instances = {},
     Clipboard = ""
 }
 Baseline.__index = Baseline
-
 local UserInputService = game:GetService("UserInputService")
 local TextService = game:GetService("TextService")
 local RunService = game:GetService("RunService")
@@ -23,24 +21,21 @@ local ContextActionService = game:GetService("ContextActionService")
 local HttpService = game:GetService("HttpService")
 local TweenService = game:GetService("TweenService")
 local Players = game:GetService("Players")
-
 local ScrollingBar = (function()
     local ScrollingBar = {}
     ScrollingBar.__index = ScrollingBar
-
     local UIS = game:GetService("UserInputService")
     local SCROLLBAR_SIZE = 18
     local ARROW_IMAGE = "rbxassetid://5279719038"
     local ARROW_COLOR = Color3.fromRGB(160, 160, 160)
-    local TRACK_COLOR = Color3.fromRGB(30, 30, 30)
-    local TRACK_BORDER = Color3.fromRGB(45, 45, 45)
-    local BTN_HOVER_COLOR = Color3.fromRGB(50, 50, 50)
-    local BTN_PRESS_COLOR = Color3.fromRGB(70, 70, 76)
-    local THUMB_COLOR = Color3.fromRGB(60, 60, 60)
-    local THUMB_HOVER_COLOR = Color3.fromRGB(80, 80, 80)
+    local TRACK_COLOR = Color3.fromRGB(40, 42, 54)
+    local TRACK_BORDER = Color3.fromRGB(33, 34, 44)
+    local BTN_HOVER_COLOR = Color3.fromRGB(68, 71, 90)
+    local BTN_PRESS_COLOR = Color3.fromRGB(98, 114, 164)
+    local THUMB_COLOR = Color3.fromRGB(68, 71, 90)
+    local THUMB_HOVER_COLOR = Color3.fromRGB(98, 114, 164)
     local THUMB_MIN_SIZE = 24
     local SCROLL_STEP = 45
-
     local function makeArrowButton(parent, rotation, isVertical)
         local btn = Instance.new("ImageButton")
         btn.Size = isVertical and UDim2.new(1, 0, 0, SCROLLBAR_SIZE) or UDim2.new(0, SCROLLBAR_SIZE, 1, 0)
@@ -52,7 +47,6 @@ local ScrollingBar = (function()
         btn.ZIndex = 101
         btn.Parent = parent
         btn.BackgroundTransparency = 0
-        
         local icon = Instance.new("ImageLabel")
         icon.AnchorPoint = Vector2.new(0.5, 0.5)
         icon.Size = UDim2.new(0, 10, 0, 6)
@@ -63,15 +57,12 @@ local ScrollingBar = (function()
         icon.Rotation = rotation
         icon.ZIndex = 102
         icon.Parent = btn
-
         btn.MouseEnter:Connect(function() btn.BackgroundColor3 = BTN_HOVER_COLOR end)
         btn.MouseLeave:Connect(function() btn.BackgroundColor3 = TRACK_COLOR end)
         btn.MouseButton1Down:Connect(function() btn.BackgroundColor3 = BTN_PRESS_COLOR end)
         btn.MouseButton1Up:Connect(function() btn.BackgroundColor3 = BTN_HOVER_COLOR end)
-
         return btn
     end
-
     function ScrollingBar.new(container, isVertical)
         local self = setmetatable({}, ScrollingBar)
         self.Container = container
@@ -81,7 +72,6 @@ local ScrollingBar = (function()
         self.ScrollPos = 0
         self.Connections = {}
         self.OnScroll = nil
-
         self.BarFrame = Instance.new("Frame")
         self.BarFrame.Name = isVertical and "VScrollBar" or "HScrollBar"
         self.BarFrame.BackgroundColor3 = TRACK_COLOR
@@ -93,15 +83,12 @@ local ScrollingBar = (function()
         self.BarFrame.Parent = container
         self.BarFrame.Visible = false
         self.BarFrame.BackgroundTransparency = 0
-
-        local upBtn = makeArrowButton(self.BarFrame, isVertical and 180 or -90, isVertical)
+        local upBtn = makeArrowButton(self.BarFrame, isVertical and 180 or 90, isVertical)
         upBtn.AnchorPoint = Vector2.new(0, 0)
         upBtn.Position = UDim2.new(0, 0, 0, 0)
-
-        local downBtn = makeArrowButton(self.BarFrame, isVertical and 0 or 90, isVertical)
+        local downBtn = makeArrowButton(self.BarFrame, isVertical and 0 or -90, isVertical)
         downBtn.AnchorPoint = Vector2.new(isVertical and 0 or 1, isVertical and 1 or 0)
         downBtn.Position = isVertical and UDim2.new(0, 0, 1, 0) or UDim2.new(1, 0, 0, 0)
-
         self.Track = Instance.new("Frame")
         self.Track.Name = "Track"
         self.Track.BackgroundColor3 = TRACK_COLOR
@@ -111,7 +98,6 @@ local ScrollingBar = (function()
         self.Track.Position = isVertical and UDim2.new(0, 0, 0, SCROLLBAR_SIZE) or UDim2.new(0, SCROLLBAR_SIZE, 0, 0)
         self.Track.ZIndex = 100
         self.Track.Parent = self.BarFrame
-
         self.Thumb = Instance.new("Frame")
         self.Thumb.Name = "Thumb"
         self.Thumb.BackgroundColor3 = THUMB_COLOR
@@ -122,28 +108,23 @@ local ScrollingBar = (function()
         self.Thumb.Visible = false
         self.Thumb.Parent = self.Track
         self.Thumb.BackgroundTransparency = 0
-
         local thumbBtn = Instance.new("TextButton")
         thumbBtn.Size = UDim2.new(1, 0, 1, 0)
         thumbBtn.BackgroundTransparency = 1
         thumbBtn.Text = ""
         thumbBtn.ZIndex = 102
         thumbBtn.Parent = self.Thumb
-
         local dragging = false
         local dragStartMouse = 0
         local dragStartThumbOffset = 0
-
         thumbBtn.MouseEnter:Connect(function()
             self.Thumb.BackgroundColor3 = THUMB_HOVER_COLOR
         end)
-
         thumbBtn.MouseLeave:Connect(function()
             if not dragging then
                 self.Thumb.BackgroundColor3 = THUMB_COLOR
             end
         end)
-
         thumbBtn.MouseButton1Down:Connect(function()
             dragging = true
             self.Thumb.BackgroundColor3 = THUMB_HOVER_COLOR
@@ -151,7 +132,6 @@ local ScrollingBar = (function()
             dragStartMouse = mousePos
             dragStartThumbOffset = isVertical and self.Thumb.Position.Y.Offset or self.Thumb.Position.X.Offset
         end)
-
         table.insert(self.Connections, UIS.InputChanged:Connect(function(input)
             if dragging then
                 if input.UserInputType == Enum.UserInputType.MouseMovement then
@@ -183,7 +163,6 @@ local ScrollingBar = (function()
                 end
             end
         end))
-
         table.insert(self.Connections, UIS.InputEnded:Connect(function(input)
             if input.UserInputType == Enum.UserInputType.MouseButton1 then
                 if dragging then
@@ -192,13 +171,11 @@ local ScrollingBar = (function()
                 end
             end
         end))
-
         local function scrollStepDir(dir)
             local max = math.max(0, self.ContentSize - self.ViewSize)
             local nP = math.clamp(self.ScrollPos + dir * SCROLL_STEP, 0, max)
             if self.OnScroll then self.OnScroll(nP) end
         end
-
         local function startRepeat(dir)
             local active = true
             scrollStepDir(dir)
@@ -211,42 +188,32 @@ local ScrollingBar = (function()
             end)
             return function() active = false end
         end
-
         local stopUp, stopDown
-
         upBtn.MouseButton1Down:Connect(function() stopUp = startRepeat(-1) end)
         upBtn.MouseButton1Up:Connect(function() if stopUp then stopUp() stopUp = nil end end)
         upBtn.MouseLeave:Connect(function() if stopUp then stopUp() stopUp = nil end end)
-
         downBtn.MouseButton1Down:Connect(function() stopDown = startRepeat(1) end)
         downBtn.MouseButton1Up:Connect(function() if stopDown then stopDown() stopDown = nil end end)
         downBtn.MouseLeave:Connect(function() if stopDown then stopDown() stopDown = nil end end)
-
         return self
     end
-
     function ScrollingBar:UpdateMetrics(viewSize, contentSize, scrollPos)
         self.ViewSize = viewSize
         self.ContentSize = contentSize
         self.ScrollPos = scrollPos
-
         local trackSize = self.IsVertical and self.Track.AbsoluteSize.Y or self.Track.AbsoluteSize.X
-
         if contentSize <= viewSize or trackSize <= 0 then
             self.BarFrame.Visible = false
             self.Thumb.Visible = false
             return
         end
-
         self.BarFrame.Visible = true
         self.Thumb.Visible = true
-
         local maxScroll = contentSize - viewSize
         local ratio = math.clamp(viewSize / contentSize, 0, 1)
         local thumbSize = math.max(THUMB_MIN_SIZE, ratio * trackSize)
         local scrollRatio = maxScroll > 0 and scrollPos / maxScroll or 0
         local thumbOffset = scrollRatio * (trackSize - thumbSize)
-
         if self.IsVertical then
             self.Thumb.Size = UDim2.new(1, -2, 0, thumbSize)
             self.Thumb.Position = UDim2.new(0, 1, 0, thumbOffset)
@@ -255,17 +222,12 @@ local ScrollingBar = (function()
             self.Thumb.Position = UDim2.new(0, thumbOffset, 0, 1)
         end
     end
-
     function ScrollingBar:Destroy()
         for _, conn in ipairs(self.Connections) do conn:Disconnect() end
         self.BarFrame:Destroy()
     end
-
     return ScrollingBar
 end)()
-
-local localPlayer = Players.LocalPlayer
-
 local shiftMap = {
     [Enum.KeyCode.One] = "!", [Enum.KeyCode.Two] = "@", [Enum.KeyCode.Three] = "#",
     [Enum.KeyCode.Four] = "$", [Enum.KeyCode.Five] = "%", [Enum.KeyCode.Six] = "^",
@@ -276,7 +238,6 @@ local shiftMap = {
     [Enum.KeyCode.Quote] = '\"', [Enum.KeyCode.Comma] = "<",
     [Enum.KeyCode.Period] = ">", [Enum.KeyCode.Slash] = "?", [Enum.KeyCode.Backquote] = "~"
 }
-
 local unshiftMap = {
     [Enum.KeyCode.One] = "1", [Enum.KeyCode.Two] = "2", [Enum.KeyCode.Three] = "3",
     [Enum.KeyCode.Four] = "4", [Enum.KeyCode.Five] = "5", [Enum.KeyCode.Six] = "6",
@@ -295,7 +256,6 @@ local unshiftMap = {
     [Enum.KeyCode.KeypadDivide] = "/", [Enum.KeyCode.KeypadMultiply] = "*",
     [Enum.KeyCode.KeypadMinus] = "-", [Enum.KeyCode.KeypadPlus] = "+"
 }
-
 local keysToSink = {
     Enum.KeyCode.W, Enum.KeyCode.A, Enum.KeyCode.S, Enum.KeyCode.D, 
     Enum.KeyCode.Space, Enum.KeyCode.Up, Enum.KeyCode.Down, 
@@ -305,7 +265,6 @@ local keysToSink = {
     Enum.KeyCode.Y, Enum.KeyCode.Home, Enum.KeyCode.End, 
     Enum.KeyCode.PageUp, Enum.KeyCode.PageDown, Enum.KeyCode.Tab
 }
-
 local function getCharacter(keyCode, isShiftDown)
     if keyCode.Value >= Enum.KeyCode.A.Value and keyCode.Value <= Enum.KeyCode.Z.Value then
         local keyString = UserInputService:GetStringForKeyCode(keyCode)
@@ -315,25 +274,16 @@ local function getCharacter(keyCode, isShiftDown)
             return keyString:lower()
         end
     end
-    
-    if isShiftDown and shiftMap[keyCode] then
-        return shiftMap[keyCode]
-    end
-    
-    if unshiftMap[keyCode] then
-        return unshiftMap[keyCode]
-    end
-    
+    if isShiftDown and shiftMap[keyCode] then return shiftMap[keyCode] end
+    if unshiftMap[keyCode] then return unshiftMap[keyCode] end
     return ""
 end
-
 local function escapeRichText(rawString)
     local s = string.gsub(rawString, "&", "&amp;")
     s = string.gsub(s, "<", "&lt;")
     s = string.gsub(s, ">", "&gt;")
     return s
 end
-
 local function getNextWordBoundary(text, index)
     if index >= #text then return #text end
     local startCharacter = text:sub(index + 1, index + 1)
@@ -345,7 +295,6 @@ local function getNextWordBoundary(text, index)
     end
     return #text
 end
-
 local function getPrevWordBoundary(text, index)
     if index <= 0 then return 0 end
     local startCharacter = text:sub(index, index)
@@ -357,7 +306,6 @@ local function getPrevWordBoundary(text, index)
     end
     return 0
 end
-
 local function getWordAtIndex(text, index)
     local startIdx = index
     local endIdx = index
@@ -369,7 +317,6 @@ local function getWordAtIndex(text, index)
     end
     return startIdx, endIdx
 end
-
 local function findWrapPoint(text, startIdx, endIdx, textSize, font, limit, defaultHeight)
     local lowBound = startIdx
     local highBound = endIdx
@@ -386,10 +333,8 @@ local function findWrapPoint(text, startIdx, endIdx, textSize, font, limit, defa
     end
     return bestPoint
 end
-
 function Baseline.new(canvasGroup)
     local self = setmetatable({}, Baseline)
-    
     self.CanvasGroup = canvasGroup
     self.Connections = {}
     self.LinesPool = {}
@@ -419,16 +364,13 @@ function Baseline.new(canvasGroup)
     self.FindMatches = {}
     self.CurrentMatchIndex = 0
     self.FindTextConn = nil
-
     self.CachedText = nil
     self.CachedTextSize = nil
     self.CachedFont = nil
     self.CachedLimitX = nil
     self.CachedLimitY = nil
     self.CachedLineMap = nil
-    
     table.insert(Baseline.Instances, self)
-    
     self.CurrentLineHighlight = Instance.new("Frame")
     self.CurrentLineHighlight.Name = "BaselineCurrentLine"
     self.CurrentLineHighlight.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
@@ -437,33 +379,28 @@ function Baseline.new(canvasGroup)
     self.CurrentLineHighlight.ZIndex = 1
     self.CurrentLineHighlight.Visible = false
     self.CurrentLineHighlight.Parent = canvasGroup
-    
     self.LineNumbersContainer = Instance.new("Frame")
     self.LineNumbersContainer.Name = "BaselineLineNumbersContainer"
     self.LineNumbersContainer.BackgroundTransparency = 1
     self.LineNumbersContainer.ClipsDescendants = true
     self.LineNumbersContainer.ZIndex = 2
     self.LineNumbersContainer.Parent = canvasGroup
-    
     self.LineNumbersInner = Instance.new("Frame")
     self.LineNumbersInner.Name = "BaselineLineNumbersInner"
     self.LineNumbersInner.BackgroundTransparency = 1
     self.LineNumbersInner.Size = UDim2.new(1, 0, 0, 0)
     self.LineNumbersInner.Parent = self.LineNumbersContainer
-    
     self.TextContainer = Instance.new("Frame")
     self.TextContainer.Name = "BaselineTextContainer"
     self.TextContainer.BackgroundTransparency = 1
     self.TextContainer.ClipsDescendants = true
     self.TextContainer.ZIndex = 2
     self.TextContainer.Parent = canvasGroup
-    
     self.InnerFrame = Instance.new("Frame")
     self.InnerFrame.Name = "BaselineInnerFrame"
     self.InnerFrame.BackgroundTransparency = 1
     self.InnerFrame.Size = UDim2.new(0, 0, 0, 0)
     self.InnerFrame.Parent = self.TextContainer
-    
     self.PlaceholderLabel = Instance.new("TextLabel")
     self.PlaceholderLabel.Name = "PlaceholderTextLabel"
     self.PlaceholderLabel.Size = UDim2.new(0, 10000, 0, 25)
@@ -474,7 +411,6 @@ function Baseline.new(canvasGroup)
     self.PlaceholderLabel.TextYAlignment = Enum.TextYAlignment.Top
     self.PlaceholderLabel.ZIndex = 1
     self.PlaceholderLabel.Parent = self.InnerFrame
-    
     self.HighlightContainer = Instance.new("Frame")
     self.HighlightContainer.Name = "BaselineHighlightContainer"
     self.HighlightContainer.Size = UDim2.new(0, 0, 0, 0)
@@ -482,7 +418,6 @@ function Baseline.new(canvasGroup)
     self.HighlightContainer.BackgroundTransparency = 1
     self.HighlightContainer.ZIndex = 2
     self.HighlightContainer.Parent = self.InnerFrame
-    
     self.Blinker = Instance.new("Frame")
     self.Blinker.Name = "BaselineBlinker"
     self.Blinker.Size = UDim2.new(0, 1, 0, 14)
@@ -491,7 +426,6 @@ function Baseline.new(canvasGroup)
     self.Blinker.Visible = false
     self.Blinker.ZIndex = 4
     self.Blinker.Parent = self.InnerFrame
-    
     self.PasteBox = Instance.new("TextBox")
     self.PasteBox.Name = "BaselinePasteBox"
     self.PasteBox.Size = UDim2.new(1, 0, 1, 0)
@@ -502,44 +436,32 @@ function Baseline.new(canvasGroup)
     self.PasteBox.Text = ""
     self.PasteBox.ZIndex = 10
     self.PasteBox.Parent = self.CanvasGroup
-    
     canvasGroup.ClipsDescendants = true
     canvasGroup.Active = true
-    
     self.VScrollBar = ScrollingBar.new(canvasGroup, true)
     self.VScrollBar.OnScroll = function(newY)
         self.ScrollOffset = Vector2.new(self.ScrollOffset.X, newY)
         self:UpdateBlinker(false)
     end
-    
     self.HScrollBar = ScrollingBar.new(canvasGroup, false)
     self.HScrollBar.OnScroll = function(newX)
         self.ScrollOffset = Vector2.new(newX, self.ScrollOffset.Y)
         self:UpdateBlinker(false)
     end
-    
     table.insert(self.Connections, self.PasteBox:GetPropertyChangedSignal("Text"):Connect(function()
         local text = self.PasteBox.Text
         if text ~= "" then
             task.defer(function()
-                if self.PasteBox and self.PasteBox.Text == text then
-                    self.PasteBox.Text = ""
-                end
+                if self.PasteBox and self.PasteBox.Text == text then self.PasteBox.Text = "" end
             end)
             if text == "\n" or text == "\r\n" or text == "\r" then return end
             local isManualKeystroke = (#text == 1) and (text == self.LastTypedChar) and ((tick() - self.LastTypedTick) < 0.2)
-            if not isManualKeystroke then
-                self:PasteChunked(text)
-            end
+            if not isManualKeystroke then self:PasteChunked(text) end
         end
     end))
-    
     table.insert(self.Connections, self.PasteBox.FocusLost:Connect(function()
-        task.defer(function()
-            if self.IsFocused then self.PasteBox:CaptureFocus() end
-        end)
+        task.defer(function() if self.IsFocused then self.PasteBox:CaptureFocus() end end)
     end))
-
     table.insert(self.Connections, UserInputService.InputBegan:Connect(function(input, gameProcessed)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             local pos = input.Position
@@ -549,11 +471,9 @@ function Baseline.new(canvasGroup)
                 local absSize = gui.AbsoluteSize
                 return pos.X >= absPos.X and pos.X <= absPos.X + absSize.X and pos.Y >= absPos.Y and pos.Y <= absPos.Y + absSize.Y
             end
-            
             if self.VScrollBar and isInside(self.VScrollBar.BarFrame) then return end
             if self.HScrollBar and isInside(self.HScrollBar.BarFrame) then return end
             if self.FindUI and isInside(self.FindUI) then return end
-            
             local didClickSelf = isInside(self.CanvasGroup)
             if didClickSelf then
                 self:Focus()
@@ -562,7 +482,6 @@ function Baseline.new(canvasGroup)
                 local isShiftDown = UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) or UserInputService:IsKeyDown(Enum.KeyCode.RightShift)
                 local closestIndex = self:GetClosestCursorIndex(relativeX, relativeY)
                 local currentTime = tick()
-                
                 if (currentTime - self.LastClickTime) < 0.3 then
                     self.ClickCount = self.ClickCount + 1
                 else
@@ -570,7 +489,6 @@ function Baseline.new(canvasGroup)
                 end
                 self.LastClickTime = currentTime
                 local displayedText = self:GetDisplayText()
-                
                 if self.ClickCount == 2 then
                     self.SelectionStart, self.CursorIndex = getWordAtIndex(displayedText, closestIndex)
                 elseif self.ClickCount == 3 then
@@ -599,7 +517,6 @@ function Baseline.new(canvasGroup)
             if not self.IsFocused then return end
             local isShiftDown = UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) or UserInputService:IsKeyDown(Enum.KeyCode.RightShift)
             local isCtrlDown = UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) or UserInputService:IsKeyDown(Enum.KeyCode.RightControl)
-            
             if isCtrlDown and input.KeyCode == Enum.KeyCode.A then
                 self.SelectionStart = 0
                 self.CursorIndex = #(self:GetDisplayText())
@@ -624,7 +541,6 @@ function Baseline.new(canvasGroup)
                 self:ToggleFindUI()
                 return
             end
-            
             if input.KeyCode == Enum.KeyCode.Tab then
                 local myTabIndex = self.CanvasGroup:GetAttribute("TabIndex") or 0
                 local nextBaseline = nil
@@ -647,7 +563,6 @@ function Baseline.new(canvasGroup)
                 end
                 return
             end
-            
             local isRepeatable = (input.KeyCode == Enum.KeyCode.Backspace) or 
                                  (input.KeyCode == Enum.KeyCode.Return) or 
                                  (input.KeyCode == Enum.KeyCode.KeypadEnter) or 
@@ -656,7 +571,6 @@ function Baseline.new(canvasGroup)
                                  (input.KeyCode == Enum.KeyCode.Up) or 
                                  (input.KeyCode == Enum.KeyCode.Down) or 
                                  (getCharacter(input.KeyCode, isShiftDown) ~= "")
-                                 
             if isRepeatable then
                 self:ProcessKey(input.KeyCode, isShiftDown, isCtrlDown)
                 self.HeldKey = input.KeyCode
@@ -667,7 +581,6 @@ function Baseline.new(canvasGroup)
             end
         end
     end))
-    
     table.insert(self.Connections, UserInputService.InputChanged:Connect(function(input)
         if self.IsDragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
             local pos = input.Position
@@ -677,7 +590,6 @@ function Baseline.new(canvasGroup)
             self:UpdateBlinker(true)
         end
     end))
-    
     table.insert(self.Connections, UserInputService.InputEnded:Connect(function(input)
         if input.KeyCode == self.HeldKey then
             self.HeldKey = nil
@@ -685,7 +597,6 @@ function Baseline.new(canvasGroup)
             self.IsDragging = false
         end
     end))
-    
     table.insert(self.Connections, RunService.RenderStepped:Connect(function(deltaTime)
         if self.HeldKey then
             self.KeyTimer = self.KeyTimer + deltaTime
@@ -711,11 +622,9 @@ function Baseline.new(canvasGroup)
             end
         end
     end))
-    
     table.insert(self.Connections, self.CanvasGroup:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
         self:UpdateBlinker(false)
     end))
-    
     table.insert(self.Connections, canvasGroup.AttributeChanged:Connect(function(attributeName)
         local value = canvasGroup:GetAttribute(attributeName)
         local updateBlinkerAttributes = {
@@ -733,7 +642,6 @@ function Baseline.new(canvasGroup)
             self.PlaceholderLabel.Text = value
         end
     end))
-    
     local proxyObj = setmetatable({}, {
         __index = function(_, key)
             local attributeValue = canvasGroup:GetAttribute(key)
@@ -759,7 +667,6 @@ function Baseline.new(canvasGroup)
             end
         end
     })
-    
     local defaultAttributes = {
         MultiLine = true, Wrapped = false, SmoothBlinker = false,
         Text = "", TextSize = 16, Font = Enum.Font.SourceSans,
@@ -768,27 +675,21 @@ function Baseline.new(canvasGroup)
         PlaceholderColor3 = Color3.fromRGB(150, 150, 150), PasswordMode = false,
         ReadOnly = false, TabIndex = 0, Lines = false
     }
-    
     for key, defaultValue in pairs(defaultAttributes) do
         if canvasGroup:GetAttribute(key) == nil then
             proxyObj[key] = defaultValue
         end
     end
-    
     self.PlaceholderLabel.Text = proxyObj.PlaceholderText
     self.PlaceholderLabel.TextColor3 = proxyObj.PlaceholderColor3
     self.PlaceholderLabel.Font = proxyObj.Font
     self.PlaceholderLabel.TextSize = proxyObj.TextSize
-    
     self:UpdateBlinker(true)
-    
     return proxyObj
 end
-
 function Baseline:ToggleFindUI()
     if self.FindUI then self:CloseFindUI() else self:OpenFindUI() end
 end
-
 function Baseline:OpenFindUI()
     local function createFindMenu()
         local mainFrame = Instance.new("Frame")
@@ -799,25 +700,21 @@ function Baseline:OpenFindUI()
         mainFrame.BorderColor3 = Color3.fromRGB(27, 42, 53)
         mainFrame.ZIndex = 1
         mainFrame.AnchorPoint = Vector2.new(0, 0)
-
         local mainPadding = Instance.new("UIPadding")
         mainPadding.Name = "UIPadding"
         mainPadding.Parent = mainFrame
-
         local row1Find = Instance.new("Frame")
         row1Find.Name = "Row1_Find"
         row1Find.Size = UDim2.new(1, 0, 0, 24)
         row1Find.Position = UDim2.new(0, 0, 0, 0)
         row1Find.BackgroundTransparency = 1
         row1Find.Parent = mainFrame
-
         local toggleExpandBtn = Instance.new("ImageButton")
         toggleExpandBtn.Name = "ToggleExpandBtn"
         toggleExpandBtn.Size = UDim2.new(0, 20, 0, 20)
         toggleExpandBtn.Position = UDim2.new(0, 0, 0, 2)
         toggleExpandBtn.BackgroundTransparency = 1
         toggleExpandBtn.Parent = row1Find
-
         local topChevron = Instance.new("ImageLabel")
         topChevron.Name = "TopChevron"
         topChevron.Size = UDim2.new(0, 18, 0, 18)
@@ -827,7 +724,6 @@ function Baseline:OpenFindUI()
         topChevron.BackgroundTransparency = 1
         topChevron.Image = "rbxassetid://81817462736641"
         topChevron.Parent = toggleExpandBtn
-
         local bottomChevron = Instance.new("ImageLabel")
         bottomChevron.Name = "BottomChevron"
         bottomChevron.Size = UDim2.new(0, 18, 0, 18)
@@ -837,7 +733,6 @@ function Baseline:OpenFindUI()
         bottomChevron.BackgroundTransparency = 1
         bottomChevron.Image = "rbxassetid://81817462736641"
         bottomChevron.Parent = toggleExpandBtn
-
         local findBox = Instance.new("TextBox")
         findBox.Name = "FindBox"
         findBox.Size = UDim2.new(0, 195, 1, 0)
@@ -852,11 +747,9 @@ function Baseline:OpenFindUI()
         findBox.ClearTextOnFocus = false
         findBox.Text = ""
         findBox.Parent = row1Find
-
         local findBoxPadding = Instance.new("UIPadding")
         findBoxPadding.Name = "UIPadding"
         findBoxPadding.Parent = findBox
-
         local findBoxStroke = Instance.new("UIStroke")
         findBoxStroke.Name = "UIStroke"
         findBoxStroke.Thickness = 1
@@ -864,7 +757,6 @@ function Baseline:OpenFindUI()
         findBoxStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
         findBoxStroke.Enabled = false
         findBoxStroke.Parent = findBox
-
         local findPrevBtn = Instance.new("ImageButton")
         findPrevBtn.Name = "FindPrevBtn"
         findPrevBtn.Size = UDim2.new(0, 20, 0, 20)
@@ -872,7 +764,6 @@ function Baseline:OpenFindUI()
         findPrevBtn.BackgroundTransparency = 1
         findPrevBtn.Image = "rbxassetid://123393842142851"
         findPrevBtn.Parent = row1Find
-
         local findNextBtn = Instance.new("ImageButton")
         findNextBtn.Name = "FindNextBtn"
         findNextBtn.Size = UDim2.new(0, 20, 0, 20)
@@ -880,7 +771,6 @@ function Baseline:OpenFindUI()
         findNextBtn.BackgroundTransparency = 1
         findNextBtn.Image = "rbxassetid://71631858247362"
         findNextBtn.Parent = row1Find
-
         local closeBtn = Instance.new("ImageButton")
         closeBtn.Name = "CloseBtn"
         closeBtn.Size = UDim2.new(0, 20, 0, 20)
@@ -888,14 +778,12 @@ function Baseline:OpenFindUI()
         closeBtn.BackgroundTransparency = 1
         closeBtn.Image = "rbxassetid://80750399461762"
         closeBtn.Parent = row1Find
-
         local row2Replace = Instance.new("Frame")
         row2Replace.Name = "Row2_Replace"
         row2Replace.Size = UDim2.new(1, 0, 0, 24)
         row2Replace.Position = UDim2.new(0, 0, 0, 28)
         row2Replace.BackgroundTransparency = 1
         row2Replace.Parent = mainFrame
-
         local replaceBox = Instance.new("TextBox")
         replaceBox.Name = "ReplaceBox"
         replaceBox.Size = UDim2.new(0, 195, 1, 0)
@@ -910,11 +798,9 @@ function Baseline:OpenFindUI()
         replaceBox.ClearTextOnFocus = false
         replaceBox.Text = ""
         replaceBox.Parent = row2Replace
-
         local replaceBoxPadding = Instance.new("UIPadding")
         replaceBoxPadding.Name = "UIPadding"
         replaceBoxPadding.Parent = replaceBox
-
         local replaceBoxStroke = Instance.new("UIStroke")
         replaceBoxStroke.Name = "UIStroke"
         replaceBoxStroke.Thickness = 1
@@ -922,28 +808,24 @@ function Baseline:OpenFindUI()
         replaceBoxStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
         replaceBoxStroke.Enabled = false
         replaceBoxStroke.Parent = replaceBox
-
         local replaceNextBtn = Instance.new("ImageButton")
         replaceNextBtn.Name = "ReplaceNextBtn"
         replaceNextBtn.Size = UDim2.new(0, 20, 0, 20)
         replaceNextBtn.Position = UDim2.new(0, 225, 0, 2)
         replaceNextBtn.BackgroundTransparency = 1
         replaceNextBtn.Parent = row2Replace
-
         local replaceAllBtn = Instance.new("ImageButton")
         replaceAllBtn.Name = "ReplaceAllBtn"
         replaceAllBtn.Size = UDim2.new(0, 20, 0, 20)
         replaceAllBtn.Position = UDim2.new(0, 249, 0, 2)
         replaceAllBtn.BackgroundTransparency = 1
         replaceAllBtn.Parent = row2Replace
-
         local row3Options = Instance.new("Frame")
         row3Options.Name = "Row3_Options"
         row3Options.Size = UDim2.new(1, 0, 0, 20)
         row3Options.Position = UDim2.new(0, 0, 0, 56)
         row3Options.BackgroundTransparency = 1
         row3Options.Parent = mainFrame
-
         local matchCaseBtn = Instance.new("ImageButton")
         matchCaseBtn.Name = "MatchCaseBtn"
         matchCaseBtn.Size = UDim2.new(0, 20, 0, 20)
@@ -951,7 +833,6 @@ function Baseline:OpenFindUI()
         matchCaseBtn.BackgroundTransparency = 1
         matchCaseBtn.Image = "rbxassetid://108524879613542"
         matchCaseBtn.Parent = row3Options
-
         local matchWholeWordBtn = Instance.new("ImageButton")
         matchWholeWordBtn.Name = "MatchWholeWordBtn"
         matchWholeWordBtn.Size = UDim2.new(0, 20, 0, 20)
@@ -959,7 +840,6 @@ function Baseline:OpenFindUI()
         matchWholeWordBtn.BackgroundTransparency = 1
         matchWholeWordBtn.Image = "rbxassetid://137472614441080"
         matchWholeWordBtn.Parent = row3Options
-
         local useRegexBtn = Instance.new("ImageButton")
         useRegexBtn.Name = "UseRegexBtn"
         useRegexBtn.Size = UDim2.new(0, 20, 0, 20)
@@ -967,7 +847,6 @@ function Baseline:OpenFindUI()
         useRegexBtn.BackgroundTransparency = 1
         useRegexBtn.Image = "rbxassetid://79087075619950"
         useRegexBtn.Parent = row3Options
-
         local showLabel = Instance.new("TextLabel")
         showLabel.Name = "Show"
         showLabel.Size = UDim2.new(0.68, 0, 1, 0)
@@ -979,38 +858,29 @@ function Baseline:OpenFindUI()
         showLabel.TextXAlignment = Enum.TextXAlignment.Left
         showLabel.Text = ""
         showLabel.Parent = row3Options
-
         local uiScale = Instance.new("UIScale")
         uiScale.Name = "UIScale"
         uiScale.Parent = mainFrame
-
         return mainFrame
     end
-    
     local templateMenu = createFindMenu()
     if self.FindUI or not templateMenu then return end
-    
     local findUI = templateMenu:Clone()
     self.FindUI = findUI
     findUI.AnchorPoint = Vector2.new(1, 0)
     findUI.Position = UDim2.new(1, -8, 0, 8)
     findUI.ZIndex = 100
     findUI.Parent = self.CanvasGroup
-    
     self.FindMatches = {}
     self.CurrentMatchIndex = 0
-    
     local row2 = findUI:FindFirstChild("Row2_Replace")
     local row3 = findUI:FindFirstChild("Row3_Options")
     local isMenuExpanded = false
     local parentAbsoluteSize = self.CanvasGroup.AbsoluteSize
     local availableMenuWidth = math.max(180, math.min(315, parentAbsoluteSize.X - 16))
-    
     if row2 then row2.Visible = false end
     if row3 then row3.Position = UDim2.new(0, 0, 0, 28) end
-    
     findUI.Size = UDim2.new(0, availableMenuWidth, 0, 62)
-    
     local function addHoverEffect(button)
         local hoverFrame = Instance.new("Frame")
         hoverFrame.Name = "HoverFrame"
@@ -1024,9 +894,7 @@ function Baseline:OpenFindUI()
         button.MouseEnter:Connect(function() hoverFrame.BackgroundTransparency = 0.5 end)
         button.MouseLeave:Connect(function() hoverFrame.BackgroundTransparency = 1 end)
     end
-    
     local showMatchLabel = row3 and row3:FindFirstChild("Show")
-    
     local function updateMatches(queryText, avoidJumping)
         self.FindMatches = {}
         if not showMatchLabel then return end
@@ -1040,22 +908,18 @@ function Baseline:OpenFindUI()
             end
             return
         end
-        
         local currentEditorText = self.CanvasGroup:GetAttribute("Text") or ""
         local queryTrimmed = queryText:match("^(.-)%s*$")
         if not queryTrimmed or queryTrimmed == "" then queryTrimmed = queryText end
-        
         local queryLowerText = queryTrimmed:lower()
         local editorLowerText = currentEditorText:lower()
         local searchStart = 1
-        
         while true do
             local startPos, endPos = editorLowerText:find(queryLowerText, searchStart, true)
             if not startPos then break end
             table.insert(self.FindMatches, {s = startPos - 1, e = endPos})
             searchStart = endPos + 1
         end
-        
         local matchCount = #self.FindMatches
         if matchCount == 0 then
             showMatchLabel.Text = "No results"
@@ -1067,7 +931,6 @@ function Baseline:OpenFindUI()
             end
             return
         end
-        
         if not avoidJumping then
             self.CurrentMatchIndex = 1
             showMatchLabel.Text = "1 of " .. matchCount .. " matches"
@@ -1081,7 +944,6 @@ function Baseline:OpenFindUI()
             self:UpdateBlinker(false)
         end
     end
-    
     local function jumpToMatch(index)
         local matchCount = #self.FindMatches
         if matchCount == 0 then return end
@@ -1093,7 +955,6 @@ function Baseline:OpenFindUI()
         self.CursorIndex = self.FindMatches[index].e
         self:UpdateBlinker(true)
     end
-    
     local row1 = findUI:FindFirstChild("Row1_Find")
     if row1 then
         local btnClose = row1:FindFirstChild("CloseBtn")
@@ -1101,19 +962,16 @@ function Baseline:OpenFindUI()
             addHoverEffect(btnClose)
             btnClose.MouseButton1Click:Connect(function() self:CloseFindUI() end)
         end
-        
         local btnFindPrev = row1:FindFirstChild("FindPrevBtn")
         if btnFindPrev then
             addHoverEffect(btnFindPrev)
             btnFindPrev.MouseButton1Click:Connect(function() jumpToMatch(self.CurrentMatchIndex - 1) end)
         end
-        
         local btnFindNext = row1:FindFirstChild("FindNextBtn")
         if btnFindNext then
             addHoverEffect(btnFindNext)
             btnFindNext.MouseButton1Click:Connect(function() jumpToMatch(self.CurrentMatchIndex + 1) end)
         end
-        
         local btnToggleExpand = row1:FindFirstChild("ToggleExpandBtn")
         if btnToggleExpand then
             addHoverEffect(btnToggleExpand)
@@ -1134,7 +992,6 @@ function Baseline:OpenFindUI()
                 end
             end)
         end
-        
         local searchInputBox = row1:FindFirstChild("FindBox")
         if searchInputBox then
             searchInputBox.MultiLine = false
@@ -1182,7 +1039,6 @@ function Baseline:OpenFindUI()
             end)
         end
     end
-    
     if row2 then
         local btnReplaceNext = row2:FindFirstChild("ReplaceNextBtn")
         if btnReplaceNext then addHoverEffect(btnReplaceNext) end
@@ -1207,7 +1063,6 @@ function Baseline:OpenFindUI()
             end)
         end
     end
-    
     if row3 then
         local btnMatchCase = row3:FindFirstChild("MatchCaseBtn")
         if btnMatchCase then addHoverEffect(btnMatchCase) end
@@ -1216,7 +1071,6 @@ function Baseline:OpenFindUI()
         local btnUseRegex = row3:FindFirstChild("UseRegexBtn")
         if btnUseRegex then addHoverEffect(btnUseRegex) end
     end
-    
     self.FindResizeConn = self.CanvasGroup:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
         if not self.FindUI then return end
         local updatedWidth = math.max(180, math.min(315, self.CanvasGroup.AbsoluteSize.X - 16))
@@ -1224,7 +1078,6 @@ function Baseline:OpenFindUI()
         self.FindUI.Size = UDim2.new(0, updatedWidth, 0, currentMenuHeight)
     end)
 end
-
 function Baseline:CloseFindUI()
     if not self.FindUI then return end
     local menuToClose = self.FindUI
@@ -1243,7 +1096,6 @@ function Baseline:CloseFindUI()
     self.SelectionStart = self.CursorIndex
     self:UpdateBlinker(true)
 end
-
 function Baseline:Import(moduleName)
     local syntaxModule = self.CanvasGroup:FindFirstChild(moduleName)
     if syntaxModule and syntaxModule:IsA("ModuleScript") then
@@ -1251,7 +1103,6 @@ function Baseline:Import(moduleName)
         self:UpdateBlinker(false)
     end
 end
-
 function Baseline:ImportTheme(url)
     task.spawn(function()
         pcall(function()
@@ -1272,7 +1123,6 @@ function Baseline:ImportTheme(url)
         end)
     end)
 end
-
 function Baseline:GetSyntaxStateAt(text, targetIndex, startIdx, startState)
     local currentIndex = startIdx or 1
     local currentState = startState
@@ -1348,7 +1198,6 @@ function Baseline:GetSyntaxStateAt(text, targetIndex, startIdx, startState)
     end
     return currentState
 end
-
 function Baseline:ApplySyntax(lineText, startState)
     if not self.SyntaxRules or lineText == "" then return escapeRichText(lineText) end
     if #lineText > 25000 then return escapeRichText(lineText) end
@@ -1363,8 +1212,8 @@ function Baseline:ApplySyntax(lineText, startState)
         end
         return defaultHex
     end
-    local commentHexColor = getRuleHexColor("comment_single", "#5A5A5A")
-    local stringHexColor = getRuleHexColor("string", "#ADF195")
+    local commentHexColor = getRuleHexColor("comment_single", "#6272A4")
+    local stringHexColor = getRuleHexColor("string", "#F1FA8C")
     if currentState then
         if currentState.close == "\n" then
             table.insert(resultsTable, '<font color="' .. commentHexColor .. '">' .. escapeRichText(lineText) .. "</font>")
@@ -1411,7 +1260,7 @@ function Baseline:ApplySyntax(lineText, startState)
                 currentIndex = currentIndex + 1
             end
             local wordString = lineText:sub(startWordIdx, currentIndex - 1)
-            local wordHex = getRuleHexColor(wordString, "#FFFFFF")
+            local wordHex = getRuleHexColor(wordString, "#F8F8F2")
             table.insert(resultsTable, '<font color="' .. wordHex .. '">' .. escapeRichText(wordString) .. "</font>")
         elseif character:match("%d") then
             local startNumIdx = currentIndex
@@ -1419,7 +1268,7 @@ function Baseline:ApplySyntax(lineText, startState)
                 currentIndex = currentIndex + 1
             end
             local numberString = lineText:sub(startNumIdx, currentIndex - 1)
-            local numberHex = getRuleHexColor("num_integer", "#FFFFFF")
+            local numberHex = getRuleHexColor("num_integer", "#FFB86C")
             table.insert(resultsTable, '<font color="' .. numberHex .. '">' .. escapeRichText(numberString) .. "</font>")
         elseif character == '"' or character == "'" then
             local startQuoteIdx = currentIndex
@@ -1474,6 +1323,10 @@ function Baseline:ApplySyntax(lineText, startState)
             end
             local fullComment = lineText:sub(startCommentIdx, currentIndex - 1)
             table.insert(resultsTable, '<font color="' .. commentHexColor .. '">' .. escapeRichText(fullComment) .. "</font>")
+        elseif character:match("[%p]") then
+            local opHex = getRuleHexColor("op_add", "#F8F8F2")
+            table.insert(resultsTable, '<font color="' .. opHex .. '">' .. escapeRichText(character) .. "</font>")
+            currentIndex = currentIndex + 1
         else
             table.insert(resultsTable, escapeRichText(character))
             currentIndex = currentIndex + 1
@@ -1481,15 +1334,11 @@ function Baseline:ApplySyntax(lineText, startState)
     end
     return table.concat(resultsTable)
 end
-
 function Baseline:GetDisplayText()
     local rawText = self.CanvasGroup:GetAttribute("Text") or ""
-    if self.CanvasGroup:GetAttribute("PasswordMode") then
-        return string.rep("•", utf8.len(rawText) or #rawText)
-    end
+    if self.CanvasGroup:GetAttribute("PasswordMode") then return string.rep("•", utf8.len(rawText) or #rawText) end
     return rawText
 end
-
 function Baseline:PushHistory()
     local currentText = self.CanvasGroup:GetAttribute("Text") or ""
     if self.History[self.HistoryIdx].text == currentText then return end
@@ -1497,7 +1346,6 @@ function Baseline:PushHistory()
     table.insert(self.History, {text = currentText, cursor = self.CursorIndex, sel = self.SelectionStart})
     self.HistoryIdx = #self.History
 end
-
 function Baseline:Undo()
     if self.HistoryIdx > 1 then
         self.HistoryIdx = self.HistoryIdx - 1
@@ -1508,7 +1356,6 @@ function Baseline:Undo()
         self:UpdateBlinker(true)
     end
 end
-
 function Baseline:Redo()
     if self.HistoryIdx < #self.History then
         self.HistoryIdx = self.HistoryIdx + 1
@@ -1519,7 +1366,6 @@ function Baseline:Redo()
         self:UpdateBlinker(true)
     end
 end
-
 function Baseline:Copy()
     if self.SelectionStart ~= self.CursorIndex then
         local selStart = math.min(self.SelectionStart, self.CursorIndex)
@@ -1530,13 +1376,11 @@ function Baseline:Copy()
         if clipboardFunction then clipboardFunction(Baseline.Clipboard) end
     end
 end
-
 function Baseline:Cut()
     if self.CanvasGroup:GetAttribute("ReadOnly") then return end
     self:Copy()
     self:DeleteSelection()
 end
-
 function Baseline:PasteChunked(text)
     if self.CanvasGroup:GetAttribute("ReadOnly") then return end
     if self.IsPasting then return end
@@ -1555,28 +1399,23 @@ function Baseline:PasteChunked(text)
         local endOffset = utf8.offset(text, remainingSpace + 1)
         if endOffset then text = text:sub(1, endOffset - 1) end
     end
-    
     task.spawn(function()
         if self.SelectionStart ~= self.CursorIndex then self:DeleteSelection() end
         local currentText = self.CanvasGroup:GetAttribute("Text") or ""
         local stringBefore = currentText:sub(1, self.CursorIndex)
         local stringAfter = currentText:sub(self.CursorIndex + 1)
-        
         self.CursorIndex = self.CursorIndex + #text
         self.SelectionStart = self.CursorIndex
         self.CanvasGroup:SetAttribute("Text", stringBefore .. text .. stringAfter)
-        
         self:PushHistory()
         self.IsPasting = false
         self:UpdateBlinker(true)
     end)
 end
-
 function Baseline:Paste()
     if self.CanvasGroup:GetAttribute("ReadOnly") then return end
     if Baseline.Clipboard and Baseline.Clipboard ~= "" then self:PasteChunked(Baseline.Clipboard) end
 end
-
 function Baseline:Focus()
     if self.IsFocused then return end
     self.IsFocused = true
@@ -1586,7 +1425,6 @@ function Baseline:Focus()
     self.PasteBox:CaptureFocus()
     self:UpdateBlinker(true)
 end
-
 function Baseline:Unfocus()
     if not self.IsFocused then return end
     self.IsFocused = false
@@ -1598,7 +1436,6 @@ function Baseline:Unfocus()
     ContextActionService:UnbindAction(self.SinkActionName)
     self.PasteBox:ReleaseFocus()
 end
-
 function Baseline:ProcessKey(keyCode, isShiftDown, isCtrlDown)
     if self.CanvasGroup:GetAttribute("ReadOnly") or self.IsPasting then
         if keyCode == Enum.KeyCode.Left or keyCode == Enum.KeyCode.Right or 
@@ -1758,7 +1595,6 @@ function Baseline:ProcessKey(keyCode, isShiftDown, isCtrlDown)
         end
     end
 end
-
 function Baseline:DeleteSelection()
     if self.SelectionStart == self.CursorIndex then return false end
     local minIndex = math.min(self.SelectionStart, self.CursorIndex)
@@ -1772,7 +1608,6 @@ function Baseline:DeleteSelection()
     self:PushHistory()
     return true
 end
-
 function Baseline:AppendText(character)
     local maxLength = self.CanvasGroup:GetAttribute("MaxLength")
     if maxLength and maxLength > 0 then
@@ -1808,7 +1643,6 @@ function Baseline:AppendText(character)
     self.CanvasGroup:SetAttribute("Text", stringBefore .. character .. stringAfter)
     self:PushHistory()
 end
-
 function Baseline:RemoveChar()
     if self.SelectionStart ~= self.CursorIndex then
         self:DeleteSelection()
@@ -1835,7 +1669,6 @@ function Baseline:RemoveChar()
         end
     end
 end
-
 function Baseline:GetLimit()
     local isWrapped = self.CanvasGroup:GetAttribute("Wrapped") or false
     local numberMarginWidth = 0
@@ -1853,7 +1686,6 @@ function Baseline:GetLimit()
     local maximumWidth = (self.CanvasGroup.AbsoluteSize.X - 8) - numberMarginWidth
     return isWrapped and Vector2.new(math.max(10, maximumWidth), 10000) or Vector2.new(10000, 10000)
 end
-
 function Baseline:GetLineMapCached(text, textSize, font, limitVector)
     if self.CachedText == text and self.CachedTextSize == textSize and self.CachedFont == font and self.CachedLimitX == limitVector.X and self.CachedLimitY == limitVector.Y then
         return self.CachedLineMap
@@ -1866,7 +1698,6 @@ function Baseline:GetLineMapCached(text, textSize, font, limitVector)
     self.CachedLineMap = self:GetLineMap(text, textSize, font, limitVector)
     return self.CachedLineMap
 end
-
 function Baseline:GetLineMap(text, textSize, font, limitVector)
     local lineSegments = {}
     local defaultTextHeight = TextService:GetTextSize("A", textSize, font, Vector2.new(10000, 10000)).Y
@@ -1882,7 +1713,6 @@ function Baseline:GetLineMap(text, textSize, font, limitVector)
     local maxLen = 0
     local maxLenStart = 1
     local maxLenEnd = 0
-
     while iteratorIndex <= textLength do
         local nextNewlineMatch = text:find("\n", iteratorIndex)
         local segmentEndIndex = nextNewlineMatch and (nextNewlineMatch - 1) or textLength
@@ -1959,7 +1789,6 @@ function Baseline:GetLineMap(text, textSize, font, limitVector)
             lineNumber = logicalLineNumber
         })
     end
-
     if not isWrapped then
         if maxLenEnd >= maxLenStart then
             local widestString = text:sub(maxLenStart, maxLenEnd)
@@ -1970,10 +1799,8 @@ function Baseline:GetLineMap(text, textSize, font, limitVector)
     else
         self.CachedDocumentWidth = limitVector.X
     end
-
     return lineSegments
 end
-
 function Baseline:GetClosestIndexInLine(lineData, targetX, text, textSize, font)
     local bestIndexFound = lineData.startIdx - 1
     local minDistanceX = math.huge
@@ -1988,7 +1815,6 @@ function Baseline:GetClosestIndexInLine(lineData, targetX, text, textSize, font)
     end
     return bestIndexFound
 end
-
 function Baseline:GetClosestCursorIndex(clickX, clickY)
     local displayedText = self:GetDisplayText()
     if displayedText == "" then return 0 end
@@ -2008,7 +1834,6 @@ function Baseline:GetClosestCursorIndex(clickX, clickY)
     end
     return self:GetClosestIndexInLine(optimalLine, clickX, displayedText, textSize, font)
 end
-
 function Baseline:UpdateBlinker(autoScrollEnabled)
     if autoScrollEnabled == nil then autoScrollEnabled = true end
     local rawEditorText = self.CanvasGroup:GetAttribute("Text") or ""
@@ -2018,16 +1843,13 @@ function Baseline:UpdateBlinker(autoScrollEnabled)
     local editorHighlightColor = self.CanvasGroup:GetAttribute("HighlightColor") or Color3.fromRGB(0, 120, 215)
     local editorTextColor = self.CanvasGroup:GetAttribute("TextColor3") or Color3.new(1, 1, 1)
     local hasLineNumbers = self.CanvasGroup:GetAttribute("Lines") or false
-    
     if self.CursorIndex > #displayedText then self.CursorIndex = #displayedText end
     if self.CursorIndex < 0 then self.CursorIndex = 0 end
     if self.SelectionStart > #displayedText then self.SelectionStart = #displayedText end
     if self.SelectionStart < 0 then self.SelectionStart = 0 end
-    
     self.PlaceholderLabel.TextSize = editorTextSize
     self.PlaceholderLabel.Font = editorFont
     self.PlaceholderLabel.Visible = rawEditorText == ""
-    
     local lineNumbersMarginWidth = 0
     if hasLineNumbers then
         local lineCountEstimate = 1
@@ -2035,20 +1857,16 @@ function Baseline:UpdateBlinker(autoScrollEnabled)
         local numberWidth = TextService:GetTextSize(tostring(lineCountEstimate), editorTextSize, editorFont, Vector2.new(10000, 10000)).X
         lineNumbersMarginWidth = math.max(30, numberWidth + 16)
     end
-    
     self.LineNumbersContainer.Visible = hasLineNumbers
     self.LineNumbersContainer.Size = UDim2.new(0, lineNumbersMarginWidth, 1, 0)
     self.LineNumbersContainer.Position = UDim2.new(0, 0, 0, 0)
     self.TextContainer.Size = UDim2.new(1, -lineNumbersMarginWidth, 1, 0)
     self.TextContainer.Position = UDim2.new(0, lineNumbersMarginWidth, 0, 0)
-    
     local editorLimit = self:GetLimit()
     local editorLineMap = self:GetLineMapCached(displayedText, editorTextSize, editorFont, editorLimit)
     local editorDefaultHeight = editorLineMap[1] and editorLineMap[1].height or 14
-    
     self.DocumentHeight = editorLineMap[#editorLineMap] and (editorLineMap[#editorLineMap].y + editorLineMap[#editorLineMap].height) or editorDefaultHeight
     self.DocumentHeight = self.DocumentHeight + 22
-    
     local currentCursorX, currentCursorY = 0, 0
     local currentCursorHeight = editorDefaultHeight
     if displayedText ~= "" then
@@ -2062,12 +1880,10 @@ function Baseline:UpdateBlinker(autoScrollEnabled)
             end
         end
     end
-    
     local viewportWidth = (self.CanvasGroup.AbsoluteSize.X - 8) - lineNumbersMarginWidth
     local viewportHeight = self.CanvasGroup.AbsoluteSize.Y - 8
     local scrollOffsetX, scrollOffsetY = self.ScrollOffset.X, self.ScrollOffset.Y
     local documentTotalWidth = self.CachedDocumentWidth or 0
-    
     if autoScrollEnabled then
         if currentCursorX < scrollOffsetX then scrollOffsetX = currentCursorX end
         if currentCursorX > ((scrollOffsetX + viewportWidth) - 2) then scrollOffsetX = (currentCursorX - viewportWidth) + 2 end
@@ -2076,27 +1892,17 @@ function Baseline:UpdateBlinker(autoScrollEnabled)
             scrollOffsetY = (currentCursorY + currentCursorHeight) - viewportHeight
         end
     end
-    
     local maximumScrollY = math.max(0, self.DocumentHeight - self.CanvasGroup.AbsoluteSize.Y)
     if scrollOffsetY > maximumScrollY then scrollOffsetY = maximumScrollY end
     if scrollOffsetY < 0 then scrollOffsetY = 0 end
-
     local maximumScrollX = math.max(0, documentTotalWidth - viewportWidth)
     if scrollOffsetX > maximumScrollX then scrollOffsetX = maximumScrollX end
     if scrollOffsetX < 0 then scrollOffsetX = 0 end
-    
     self.ScrollOffset = Vector2.new(scrollOffsetX, scrollOffsetY)
     self.InnerFrame.Position = UDim2.new(0, -scrollOffsetX, 0, -scrollOffsetY)
     self.LineNumbersInner.Position = UDim2.new(0, 0, 0, -scrollOffsetY)
-    
-    if self.VScrollBar then
-        self.VScrollBar:UpdateMetrics(self.CanvasGroup.AbsoluteSize.Y, self.DocumentHeight, scrollOffsetY)
-    end
-    
-    if self.HScrollBar then
-        self.HScrollBar:UpdateMetrics(viewportWidth + 8, documentTotalWidth, scrollOffsetX)
-    end
-    
+    if self.VScrollBar then self.VScrollBar:UpdateMetrics(self.CanvasGroup.AbsoluteSize.Y, self.DocumentHeight, scrollOffsetY) end
+    if self.HScrollBar then self.HScrollBar:UpdateMetrics(viewportWidth + 8, documentTotalWidth, scrollOffsetX) end
     if hasLineNumbers and self.IsFocused then
         self.CurrentLineHighlight.Visible = true
         local targetHighlightPosition = UDim2.new(0, 0, 0, (4 + currentCursorY) - scrollOffsetY)
@@ -2114,13 +1920,11 @@ function Baseline:UpdateBlinker(autoScrollEnabled)
     else
         self.CurrentLineHighlight.Visible = false
     end
-    
     local viewportStartY = scrollOffsetY
     local viewportEndY = scrollOffsetY + viewportHeight + 16
     local visibleLinesCount = 0
     local visibleHighlightsCount = 0
     local visibleLineNumbersCount = 0
-    
     local firstVisibleIdx, lastVisibleIdx = 1, #editorLineMap
     if #editorLineMap > 0 then
         local L, R = 1, #editorLineMap
@@ -2135,7 +1939,6 @@ function Baseline:UpdateBlinker(autoScrollEnabled)
             end
         end
         firstVisibleIdx = bestFirst
-
         local bestLast = bestFirst
         L, R = bestFirst, #editorLineMap
         while L <= R do
@@ -2149,16 +1952,13 @@ function Baseline:UpdateBlinker(autoScrollEnabled)
         end
         lastVisibleIdx = bestLast
     end
-    
     local syntaxState = nil
     local processedTextUpTo = 1
-    
     if #editorLineMap > 0 and firstVisibleIdx > 1 then
         local targetStart = editorLineMap[firstVisibleIdx].startIdx
         syntaxState = self:GetSyntaxStateAt(displayedText, targetStart, 1, nil)
         processedTextUpTo = targetStart
     end
-    
     if #editorLineMap > 0 then
         for i = firstVisibleIdx, lastVisibleIdx do
             local lineData = editorLineMap[i]
@@ -2185,7 +1985,6 @@ function Baseline:UpdateBlinker(autoScrollEnabled)
                 textLabelObj.Position = UDim2.new(0, 4, 0, 4 + lineData.y)
                 textLabelObj.Size = UDim2.new(0, 10000, 0, lineData.height)
                 textLabelObj.Visible = true
-                
                 if hasLineNumbers and lineData.lineNumber then
                     visibleLineNumbersCount = visibleLineNumbersCount + 1
                     local numberLabelObj = self.LineNumbersPool[visibleLineNumbersCount]
@@ -2207,7 +2006,6 @@ function Baseline:UpdateBlinker(autoScrollEnabled)
                     numberLabelObj.Size = UDim2.new(1, -8, 0, lineData.height)
                     numberLabelObj.Visible = true
                 end
-                
                 local function renderHighlightSelection(startIndex, endIndex, renderColor, renderTransparency)
                     if endIndex >= (lineData.startIdx - 1) and startIndex <= lineData.endIdx then
                         local highlightStart = math.max(lineData.startIdx, startIndex + 1)
@@ -2248,7 +2046,6 @@ function Baseline:UpdateBlinker(autoScrollEnabled)
                         end
                     end
                 end
-                
                 if self.FindMatches then
                     for _, matchData in ipairs(self.FindMatches) do
                         if matchData.e >= (lineData.startIdx - 1) and matchData.s <= lineData.endIdx then
@@ -2256,7 +2053,6 @@ function Baseline:UpdateBlinker(autoScrollEnabled)
                         end
                     end
                 end
-                
                 if self.SelectionStart ~= self.CursorIndex then
                     local selectionStartIdx = math.min(self.SelectionStart, self.CursorIndex)
                     local selectionEndIdx = math.max(self.SelectionStart, self.CursorIndex)
@@ -2267,7 +2063,6 @@ function Baseline:UpdateBlinker(autoScrollEnabled)
             end
         end
     end
-    
     for i = visibleLinesCount + 1, #self.LinesPool do self.LinesPool[i].Visible = false end
     for i = visibleHighlightsCount + 1, #self.HighlightPool do self.HighlightPool[i].Visible = false end
     if hasLineNumbers then
@@ -2275,7 +2070,6 @@ function Baseline:UpdateBlinker(autoScrollEnabled)
     else
         for i = 1, #self.LineNumbersPool do self.LineNumbersPool[i].Visible = false end
     end
-    
     local targetBlinkerPosition = UDim2.new(0, 4 + currentCursorX, 0, 4 + currentCursorY)
     local targetBlinkerSize = UDim2.new(0, 1, 0, currentCursorHeight)
     if self.CanvasGroup:GetAttribute("SmoothBlinker") then
@@ -2291,7 +2085,6 @@ function Baseline:UpdateBlinker(autoScrollEnabled)
     self.BlinkTimer = 0
     if self.IsFocused then self.Blinker.Visible = self.SelectionStart == self.CursorIndex end
 end
-
 function Baseline:Destroy()
     self:Unfocus()
     self:CloseFindUI()
@@ -2306,5 +2099,4 @@ function Baseline:Destroy()
     if self.HScrollBar then self.HScrollBar:Destroy() end
     self.CanvasGroup:ClearAllChildren()
 end
-
 return Baseline
