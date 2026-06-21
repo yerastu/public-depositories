@@ -27,12 +27,13 @@ local ScrollingBar = (function()
     local SCROLLBAR_SIZE = 18
     local ARROW_IMAGE = "rbxassetid://5279719038"
     local ARROW_COLOR = Color3.fromRGB(160, 160, 160)
-    local TRACK_COLOR = Color3.fromRGB(40, 42, 54)
-    local TRACK_BORDER = Color3.fromRGB(33, 34, 44)
-    local BTN_HOVER_COLOR = Color3.fromRGB(68, 71, 90)
-    local BTN_PRESS_COLOR = Color3.fromRGB(98, 114, 164)
-    local THUMB_COLOR = Color3.fromRGB(68, 71, 90)
-    local THUMB_HOVER_COLOR = Color3.fromRGB(98, 114, 164)
+    
+    local TRACK_COLOR = Color3.fromRGB(35, 35, 35)       -- Matche
+    local TRACK_BORDER = Color3.fromRGB(33, 33, 33)      -- Matche
+    local BTN_HOVER_COLOR = Color3.fromRGB(68, 68, 68)   -- Matche
+    local BTN_PRESS_COLOR = Color3.fromRGB(40, 40, 40)   -- Matche
+    local THUMB_COLOR = Color3.fromRGB(60, 60, 60)       -- Matche
+    local THUMB_HOVER_COLOR = Color3.fromRGB(75, 75, 75) -- Matche
     local THUMB_MIN_SIZE = 24
     local SCROLL_STEP = 45
     local function makeArrowButton(parent, rotation, isVertical)
