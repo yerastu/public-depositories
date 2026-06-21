@@ -670,7 +670,7 @@ function Baseline.new(canvasGroup)
     local defaultAttributes = {
         MultiLine = true, Wrapped = false, SmoothBlinker = true,
         Text = "", TextSize = 16, Font = Enum.Font.SourceSans,
-        TextColor3 = Color3.new(0, 0, 0), BlinkerColor = Color3.new(1, 1, 1),
+        TextColor3 = Color3.new(255,255,255), BlinkerColor = Color3.new(1, 1, 1),
         HighlightColor = Color3.fromRGB(0, 120, 215), PlaceholderText = "",
         PlaceholderColor3 = Color3.fromRGB(150, 150, 150), PasswordMode = false,
         ReadOnly = false, TabIndex = 0, Lines = true
