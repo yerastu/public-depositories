@@ -1,13 +1,5 @@
-local DraculaKeys = {}
-function GetData()
-	local Config = {
-		Name = "LuaU",
-		Version = "1.0.0",
-		Author = "Yera"
-	}
-end
 
--- ── keyword ───────────────────────────────────────
+local DraculaKeys = {}
 local keywordColor = Color3.fromRGB(235, 121, 115)
 DraculaKeys["and"] = { type = "keyword", color = keywordColor }
 DraculaKeys["do"] = { type = "keyword", color = keywordColor }
@@ -22,8 +14,6 @@ DraculaKeys["or"] = { type = "keyword", color = keywordColor }
 DraculaKeys["then"] = { type = "keyword", color = keywordColor }
 DraculaKeys["type"] = { type = "keyword", color = keywordColor }
 DraculaKeys["self"] = { type = "keyword", color = keywordColor }
-
--- ── flow ──────────────────────────────────────────
 local flowColor = Color3.fromRGB(235, 121, 115)
 DraculaKeys["break"] = { type = "flow", color = flowColor }
 DraculaKeys["continue"] = { type = "flow", color = flowColor }
@@ -35,15 +25,11 @@ DraculaKeys["repeat"] = { type = "flow", color = flowColor }
 DraculaKeys["return"] = { type = "flow", color = flowColor }
 DraculaKeys["until"] = { type = "flow", color = flowColor }
 DraculaKeys["while"] = { type = "flow", color = flowColor }
-
--- ── literal ───────────────────────────────────────
 local literalColor = Color3.fromRGB(242, 186, 42)
 DraculaKeys["false"] = { type = "literal", color = literalColor }
 DraculaKeys["nil"] = { type = "literal", color = literalColor }
 DraculaKeys["true"] = { type = "literal", color = literalColor }
-
--- ── operator ──────────────────────────────────────
-local operatorColor = Color3.fromRGB(188, 190, 200)
+local operatorColor = Color3.fromRGB(248, 248, 242)
 DraculaKeys["op_add"] = { type = "operator", color = operatorColor }
 DraculaKeys["op_assign"] = { type = "operator", color = operatorColor }
 DraculaKeys["op_concat"] = { type = "operator", color = operatorColor }
@@ -61,8 +47,6 @@ DraculaKeys["op_neq"] = { type = "operator", color = operatorColor }
 DraculaKeys["op_pow"] = { type = "operator", color = operatorColor }
 DraculaKeys["op_sub"] = { type = "operator", color = operatorColor }
 DraculaKeys["op_unm"] = { type = "operator", color = operatorColor }
-
--- ── type_annotation ───────────────────────────────
 local typeColor = Color3.fromRGB(82, 139, 255)
 DraculaKeys["op_ampersand"] = { type = "type_annotation", color = typeColor }
 DraculaKeys["op_arrow"] = { type = "type_annotation", color = typeColor }
@@ -71,8 +55,6 @@ DraculaKeys["op_pipe"] = { type = "type_annotation", color = typeColor }
 DraculaKeys["op_question"] = { type = "type_annotation", color = typeColor }
 DraculaKeys["op_typecast"] = { type = "type_annotation", color = typeColor }
 DraculaKeys["typeof"] = { type = "type_annotation", color = typeColor }
-
--- ── builtin ───────────────────────────────────────
 local builtinColor = Color3.fromRGB(143, 180, 255)
 DraculaKeys["assert"] = { type = "builtin", color = builtinColor }
 DraculaKeys["collectgarbage"] = { type = "builtin", color = builtinColor }
@@ -100,8 +82,6 @@ DraculaKeys["tostring"] = { type = "builtin", color = builtinColor }
 DraculaKeys["unpack"] = { type = "builtin", color = builtinColor }
 DraculaKeys["warn"] = { type = "builtin", color = builtinColor }
 DraculaKeys["xpcall"] = { type = "builtin", color = builtinColor }
-
--- ── global ────────────────────────────────────────
 local globalColor = Color3.fromRGB(112, 160, 255)
 DraculaKeys["_G"] = { type = "global", color = globalColor }
 DraculaKeys["_VERSION"] = { type = "global", color = globalColor }
@@ -121,8 +101,6 @@ DraculaKeys["task"] = { type = "global", color = globalColor }
 DraculaKeys["utf8"] = { type = "global", color = globalColor }
 DraculaKeys["vector"] = { type = "global", color = globalColor }
 DraculaKeys["workspace"] = { type = "global", color = globalColor }
-
--- ── type ──────────────────────────────────────────
 local dataTypeColor = Color3.fromRGB(82, 139, 255)
 DraculaKeys["Axes"] = { type = "type", color = dataTypeColor }
 DraculaKeys["BrickColor"] = { type = "type", color = dataTypeColor }
@@ -168,8 +146,6 @@ DraculaKeys["thread"] = { type = "type", color = dataTypeColor }
 DraculaKeys["unknown"] = { type = "type", color = dataTypeColor }
 DraculaKeys["userdata"] = { type = "type", color = dataTypeColor }
 DraculaKeys["void"] = { type = "type", color = dataTypeColor }
-
--- ── metamethod ────────────────────────────────────
 local metamethodColor = Color3.fromRGB(250, 228, 170)
 DraculaKeys["__add"] = { type = "metamethod", color = metamethodColor }
 DraculaKeys["__band"] = { type = "metamethod", color = metamethodColor }
@@ -196,14 +172,10 @@ DraculaKeys["__sub"] = { type = "metamethod", color = metamethodColor }
 DraculaKeys["__tostring"] = { type = "metamethod", color = metamethodColor }
 DraculaKeys["__type"] = { type = "metamethod", color = metamethodColor }
 DraculaKeys["__unm"] = { type = "metamethod", color = metamethodColor }
-
--- ── comment ───────────────────────────────────────
-local commentColor = Color3.fromRGB(106, 111, 129)
+local commentColor = Color3.fromRGB(98, 114, 164)
 DraculaKeys["comment_multi_close"] = { type = "comment", color = commentColor }
 DraculaKeys["comment_multi_open"] = { type = "comment", color = commentColor }
 DraculaKeys["comment_single"] = { type = "comment", color = commentColor }
-
--- ── number ────────────────────────────────────────
 local numberColor = Color3.fromRGB(242, 186, 42)
 DraculaKeys["num_binary"] = { type = "number", color = numberColor }
 DraculaKeys["num_exp"] = { type = "number", color = numberColor }
@@ -213,5 +185,4 @@ DraculaKeys["num_inf"] = { type = "number", color = numberColor }
 DraculaKeys["num_integer"] = { type = "number", color = numberColor }
 DraculaKeys["num_nan"] = { type = "number", color = numberColor }
 DraculaKeys["num_separator"] = { type = "number", color = numberColor }
-
-return DraculaKeys
+return function() return DraculaKeys end
