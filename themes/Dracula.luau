@@ -1,4 +1,3 @@
-
 local DraculaKeys = {}
 local keywordColor = Color3.fromRGB(235, 121, 115)
 DraculaKeys["and"] = { type = "keyword", color = keywordColor }
@@ -29,7 +28,7 @@ local literalColor = Color3.fromRGB(242, 186, 42)
 DraculaKeys["false"] = { type = "literal", color = literalColor }
 DraculaKeys["nil"] = { type = "literal", color = literalColor }
 DraculaKeys["true"] = { type = "literal", color = literalColor }
-local operatorColor = Color3.fromRGB(248, 248, 242)
+local operatorColor = Color3.fromRGB(188, 190, 200)
 DraculaKeys["op_add"] = { type = "operator", color = operatorColor }
 DraculaKeys["op_assign"] = { type = "operator", color = operatorColor }
 DraculaKeys["op_concat"] = { type = "operator", color = operatorColor }
