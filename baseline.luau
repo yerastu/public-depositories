@@ -1,4 +1,3 @@
-
 local AutoIndent = {}
 function AutoIndent.needsEnd(line)
     if line:match("if%s+.*then%s*$") then return true end
@@ -83,10 +82,10 @@ local ScrollingBar = (function()
         self.BarFrame.Parent = container
         self.BarFrame.Visible = false
         self.BarFrame.BackgroundTransparency = 0
-        local upBtn = makeArrowButton(self.BarFrame, isVertical and 180 or 90, isVertical)
+        local upBtn = makeArrowButton(self.BarFrame, isVertical and 180 or -90, isVertical)
         upBtn.AnchorPoint = Vector2.new(0, 0)
         upBtn.Position = UDim2.new(0, 0, 0, 0)
-        local downBtn = makeArrowButton(self.BarFrame, isVertical and 0 or -90, isVertical)
+        local downBtn = makeArrowButton(self.BarFrame, isVertical and 0 or 90, isVertical)
         downBtn.AnchorPoint = Vector2.new(isVertical and 0 or 1, isVertical and 1 or 0)
         downBtn.Position = isVertical and UDim2.new(0, 0, 1, 0) or UDim2.new(1, 0, 0, 0)
         self.Track = Instance.new("Frame")
@@ -1116,7 +1115,12 @@ function Baseline:ImportTheme(url)
             if loadFunc then
                 local fn = loadFunc(source)
                 if fn then
-                    self.SyntaxRules = fn()
+                    local result = fn()
+                    if type(result) == "function" then
+                        self.SyntaxRules = result()
+                    else
+                        self.SyntaxRules = result
+                    end
                     self:UpdateBlinker(true)
                 end
             end
@@ -1199,21 +1203,24 @@ function Baseline:GetSyntaxStateAt(text, targetIndex, startIdx, startState)
     return currentState
 end
 function Baseline:ApplySyntax(lineText, startState)
-    if not self.SyntaxRules or lineText == "" then return escapeRichText(lineText) end
+    if type(self.SyntaxRules) ~= "table" or lineText == "" then return escapeRichText(lineText) end
     if #lineText > 25000 then return escapeRichText(lineText) end
     local resultsTable = {}
     local textLength = #lineText
     local currentIndex = 1
     local currentState = startState
     local function getRuleHexColor(ruleName, defaultHex)
+        if type(self.SyntaxRules) ~= "table" then return defaultHex end
         local ruleData = self.SyntaxRules[ruleName]
-        if ruleData then
+        if ruleData and ruleData.color then
             return string.format("#%02X%02X%02X", math.floor(ruleData.color.R * 255 + 0.5), math.floor(ruleData.color.G * 255 + 0.5), math.floor(ruleData.color.B * 255 + 0.5))
         end
         return defaultHex
     end
     local commentHexColor = getRuleHexColor("comment_single", "#6272A4")
     local stringHexColor = getRuleHexColor("string", "#F1FA8C")
+    local operatorHexColor = getRuleHexColor("op_add", "#BCBEC8")
+    local defaultHexColor = "#F8F8F2"
     if currentState then
         if currentState.close == "\n" then
             table.insert(resultsTable, '<font color="' .. commentHexColor .. '">' .. escapeRichText(lineText) .. "</font>")
@@ -1260,7 +1267,22 @@ function Baseline:ApplySyntax(lineText, startState)
                 currentIndex = currentIndex + 1
             end
             local wordString = lineText:sub(startWordIdx, currentIndex - 1)
-            local wordHex = getRuleHexColor(wordString, "#F8F8F2")
+            local isFunctionCall = false
+            local nextCharIdx = currentIndex
+            while nextCharIdx <= textLength and lineText:sub(nextCharIdx, nextCharIdx):match("%s") do
+                nextCharIdx = nextCharIdx + 1
+            end
+            if nextCharIdx <= textLength and lineText:sub(nextCharIdx, nextCharIdx) == "(" then
+                isFunctionCall = true
+            end
+            local wordHex = getRuleHexColor(wordString, nil)
+            if not wordHex then
+                if isFunctionCall then
+                    wordHex = getRuleHexColor("function_call", "#50FA7B")
+                else
+                    wordHex = defaultHexColor
+                end
+            end
             table.insert(resultsTable, '<font color="' .. wordHex .. '">' .. escapeRichText(wordString) .. "</font>")
         elseif character:match("%d") then
             local startNumIdx = currentIndex
@@ -1324,8 +1346,7 @@ function Baseline:ApplySyntax(lineText, startState)
             local fullComment = lineText:sub(startCommentIdx, currentIndex - 1)
             table.insert(resultsTable, '<font color="' .. commentHexColor .. '">' .. escapeRichText(fullComment) .. "</font>")
         elseif character:match("[%p]") then
-            local opHex = getRuleHexColor("op_add", "#F8F8F2")
-            table.insert(resultsTable, '<font color="' .. opHex .. '">' .. escapeRichText(character) .. "</font>")
+            table.insert(resultsTable, '<font color="' .. operatorHexColor .. '">' .. escapeRichText(character) .. "</font>")
             currentIndex = currentIndex + 1
         else
             table.insert(resultsTable, escapeRichText(character))
